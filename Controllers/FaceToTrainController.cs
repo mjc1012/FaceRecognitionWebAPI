@@ -14,22 +14,11 @@ namespace FaceRecognitionWebAPI.Controllers
     [ApiController]
     public class FaceToTrainController : Controller
     {
-        private readonly IFaceToTrainRepository _faceToTrainRepository;
-        private readonly IPersonRepository _personRepository;
-        private readonly IFaceExpressionRepository _faceExpressionRepository;
-        private readonly IImageAugmentationService _imageAugmentationService;
-        private readonly IImageService _imageService;
-        private readonly IAugmentedFaceRepository _augmentedFaceRepository;
+        private readonly IUnitOfWork _uow;
         private readonly IMapper _mapper;
-        public FaceToTrainController(IFaceToTrainRepository faceToTrainRepository, IPersonRepository personRepository, IFaceExpressionRepository faceExpressionRepository,
-            IImageAugmentationService imageAugmentationService, IImageService imageService, IMapper mapper, IAugmentedFaceRepository augmentedFaceRepository)
+        public FaceToTrainController(IUnitOfWork uow, IMapper mapper)
         {
-            _faceToTrainRepository = faceToTrainRepository;
-            _personRepository = personRepository;
-            _faceExpressionRepository = faceExpressionRepository;
-            _imageAugmentationService= imageAugmentationService;
-            _imageService = imageService;
-            _augmentedFaceRepository = augmentedFaceRepository;
+            _uow = uow;
             _mapper = mapper;
         }
 
@@ -40,7 +29,7 @@ namespace FaceRecognitionWebAPI.Controllers
             ResponseApi<List<FaceToTrainDto>> response;
             try
             {
-                List<FaceToTrainDto> faces = _mapper.Map<List<FaceToTrainDto>>(await _faceToTrainRepository.GetFacesToTrain());
+                List<FaceToTrainDto> faces = _mapper.Map<List<FaceToTrainDto>>(await _uow.faceToTrainRepository.GetFacesToTrain());
 
                 if (faces.Count > 0)
                 {
@@ -66,7 +55,7 @@ namespace FaceRecognitionWebAPI.Controllers
             ResponseApi<List<FaceToTrainDto>> response;
             try
             {
-                List<FaceToTrainDto> faces = _mapper.Map<List<FaceToTrainDto>>(await _faceToTrainRepository.GetFacesToTrain(personId));
+                List<FaceToTrainDto> faces = _mapper.Map<List<FaceToTrainDto>>(await _uow.faceToTrainRepository.GetFacesToTrain(personId));
 
                 if (faces.Count > 0)
                 {
@@ -94,8 +83,8 @@ namespace FaceRecognitionWebAPI.Controllers
             try
             {
 
-                List<FaceExpression> faceExpressions = await _faceExpressionRepository.GetFaceExpressions();
-                FaceExpressionDto missingExpression = _mapper.Map<FaceExpressionDto>(await _faceToTrainRepository.GetMissingFaceExpressionOfPerson(id, faceExpressions));
+                List<FaceExpression> faceExpressions = await _uow.faceExpressionRepository.GetFaceExpressions();
+                FaceExpressionDto missingExpression = _mapper.Map<FaceExpressionDto>(await _uow.faceToTrainRepository.GetMissingFaceExpressionOfPerson(id, faceExpressions));
 
                 if (missingExpression != null)
                 {
@@ -123,14 +112,14 @@ namespace FaceRecognitionWebAPI.Controllers
             ResponseApi<FaceToTrainDto> response;
             try
             {
-                request.ImageFile = _imageService.SaveImage(request.Base64String, request.PersonId);
+                request.ImageFile = _uow.imageService.SaveImage(request.Base64String, request.PersonId);
                 var faceMap = _mapper.Map<FaceToTrain>(request);
-                faceMap.Person = await _personRepository.GetPerson(request.PersonId);
-                faceMap.FaceExpression = await _faceExpressionRepository.GetFaceExpression(request.FaceExpressionId);
+                faceMap.Person = await _uow.personRepository.GetPerson(request.PersonId);
+                faceMap.FaceExpression = await _uow.faceExpressionRepository.GetFaceExpression(request.FaceExpressionId);
 
-                FaceToTrain faceCreated = await _faceToTrainRepository.CreateFaceToTrain(faceMap);
+                FaceToTrain faceCreated = await _uow.faceToTrainRepository.CreateFaceToTrain(faceMap);
 
-                await _imageAugmentationService.RunImageAugmentation(faceCreated);
+                await _uow.imageAugmentationService.RunImageAugmentation(faceCreated);
 
                 if (faceCreated.Id != 0)
                 {
@@ -159,13 +148,13 @@ namespace FaceRecognitionWebAPI.Controllers
             try
             {
 
-                FaceToTrain face = await _faceToTrainRepository.GetFaceToTrain(id);
-                List<AugmentedFace> augmentedFaces = await _augmentedFaceRepository.GetAugmentedFaces(face.Id);
-                if (!(await _imageService.DeleteImage(face, augmentedFaces)))
+                FaceToTrain face = await _uow.faceToTrainRepository.GetFaceToTrain(id);
+                List<AugmentedFace> augmentedFaces = await _uow.augmentedFaceRepository.GetAugmentedFaces(face.Id);
+                if (!(await _uow.imageService.DeleteImage(face, augmentedFaces)))
                 {
                     response = new ResponseApi<bool>() { Status = true, Message = "Could not delete" };
                 }
-                bool deleted = await _faceToTrainRepository.DeleteFaceToTrain(face);
+                bool deleted = await _uow.faceToTrainRepository.DeleteFaceToTrain(face);
 
                 if (deleted)
                 {

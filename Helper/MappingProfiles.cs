@@ -38,7 +38,7 @@ namespace FaceRecognitionWebAPI.Helper
             CreateMap<FaceToRecognize, FaceToRecognizeDto>()
                 .ForMember(
                 destiny => destiny.LoggedTime,
-                opt => opt.MapFrom(origin => origin.LoggedTime.ToString("dd/MM/yyyy HH:mm:ss"))
+                opt => opt.MapFrom(origin => origin.LoggedTime.ToString("yyyy-MM-dd HH:mm:ss"))
                 )
                 .ForMember(
                 destiny => destiny.Base64String,
@@ -47,7 +47,7 @@ namespace FaceRecognitionWebAPI.Helper
             CreateMap<FaceToRecognizeDto, FaceToRecognize>()
                .ForMember(
                destiny => destiny.LoggedTime,
-               opt => opt.MapFrom(origin => DateTime.ParseExact(origin.LoggedTime, "dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture))
+               opt => opt.MapFrom(origin => DateTime.ParseExact(origin.LoggedTime, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture))
                )
                .ForMember(
                destiny => destiny.FaceRecognitionStatus,

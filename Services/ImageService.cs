@@ -19,36 +19,6 @@ namespace FaceRecognitionWebAPI.Services
             _environment = environment;
         }
 
-        public string SaveImage(string base64String, int personId)
-        {
-            try
-            {
-                var path = (personId == -1) ? Path.Combine(_environment.ContentRootPath, "Faces To Recognize") : Path.Combine(Path.Combine(_environment.ContentRootPath, "Face Dataset"), personId.ToString());
-                if (!Directory.Exists(path))
-                {
-                    Directory.CreateDirectory(path);
-                }
-
-                byte[] imageBytes = Convert.FromBase64String(base64String);
-                MemoryStream ms = new MemoryStream(imageBytes, 0, imageBytes.Length);
-                ms.Write(imageBytes, 0, imageBytes.Length);
-                Image image = Image.FromStream(ms, true);
-
-                string uniqueString = Guid.NewGuid().ToString();
-                // create a unique filename here
-                var newFileName = uniqueString + ".jpg";
-                var fileWithPath = Path.Combine(path, newFileName);
-                image.Save(fileWithPath);
-                ms.Close();
-
-                return newFileName;
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
         //public string SaveImage(string base64String, int personId)
         //{
         //    try
@@ -64,40 +34,11 @@ namespace FaceRecognitionWebAPI.Services
         //        ms.Write(imageBytes, 0, imageBytes.Length);
         //        Image image = Image.FromStream(ms, true);
 
-        //        Bitmap img = (Bitmap)image;
-
-        //        Net faceNet = CvDnn.ReadNetFromCaffe("D:\\THESIS FINAL OUTPUT\\FaceRecognitionWebAPI\\Face Detection Model\\deploy.prototxt.txt", "D:\\THESIS FINAL OUTPUT\\FaceRecognitionWebAPI\\Face Detection Model\\res10_300x300_ssd_iter_140000_fp16.caffemodel");
-
-        //        Mat newImage = img.ToMat();
-        //        int frameHeight = newImage.Rows;
-        //        int frameWidth = newImage.Cols;
-
-        //        var blob = CvDnn.BlobFromImage(newImage, 1.0, new OpenCvSharp.Size(224, 224),
-        //            new Scalar(104, 117, 123), false, false);
-
-        //        faceNet.SetInput(blob, "data");
-
-        //        var detection = faceNet.Forward("detection_out");
-        //        var detectionMat = new Mat(detection.Size(2), detection.Size(3), MatType.CV_32F,
-        //            detection.Ptr(0));
-
-        //        float confidence = detectionMat.At<float>(0, 2);
-        //        int x1 = (int)(detectionMat.At<float>(0, 3) * frameWidth);
-        //        int y1 = (int)(detectionMat.At<float>(0, 4) * frameHeight);
-        //        int x2 = (int)(detectionMat.At<float>(0, 5) * frameWidth);
-        //        int y2 = (int)(detectionMat.At<float>(0, 6) * frameHeight);
-
-        //        Rect roi = new Rect(x1, y1, x2 - x1, y2 - y1);
-        //        var detectedFace = newImage.Clone(roi);
-
         //        string uniqueString = Guid.NewGuid().ToString();
         //        // create a unique filename here
         //        var newFileName = uniqueString + ".jpg";
         //        var fileWithPath = Path.Combine(path, newFileName);
-        //        Mat imageToSave = new Mat();
-        //        //Save detected face
-        //        Cv2.Resize(detectedFace, imageToSave, new OpenCvSharp.Size(224, 224));
-        //        imageToSave.SaveImage(fileWithPath);
+        //        image.Save(fileWithPath);
         //        ms.Close();
 
         //        return newFileName;
@@ -107,6 +48,66 @@ namespace FaceRecognitionWebAPI.Services
         //        throw ex;
         //    }
         //}
+
+        public string SaveImage(string base64String, int personId)
+        {
+            try
+            {
+                var path = (personId == -1) ? Path.Combine(_environment.ContentRootPath, "Faces To Recognize") : Path.Combine(Path.Combine(_environment.ContentRootPath, "Face Dataset"), personId.ToString());
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
+
+                byte[] imageBytes = Convert.FromBase64String(base64String);
+                MemoryStream ms = new MemoryStream(imageBytes, 0, imageBytes.Length);
+                ms.Write(imageBytes, 0, imageBytes.Length);
+                Image image = Image.FromStream(ms, true);
+
+                Bitmap img = (Bitmap)image;
+
+                Net faceNet = CvDnn.ReadNetFromCaffe("D:\\THESIS FINAL OUTPUT\\FaceRecognitionWebAPI\\Face Detection Model\\deploy.prototxt.txt", "D:\\THESIS FINAL OUTPUT\\FaceRecognitionWebAPI\\Face Detection Model\\res10_300x300_ssd_iter_140000_fp16.caffemodel");
+
+                Mat newImage = img.ToMat();
+                OpenCvSharp.Cv2.CvtColor(newImage, newImage, OpenCvSharp.ColorConversionCodes.RGBA2RGB);
+                int frameHeight = newImage.Rows;
+                int frameWidth = newImage.Cols;
+
+                var blob = CvDnn.BlobFromImage(newImage, 1.0, new OpenCvSharp.Size(224, 224),
+                    new Scalar(104, 117, 123), false, false);
+
+                faceNet.SetInput(blob, "data");
+
+                var detection = faceNet.Forward("detection_out");
+                var detectionMat = new Mat(detection.Size(2), detection.Size(3), MatType.CV_32F,
+                    detection.Ptr(0));
+
+                float confidence = detectionMat.At<float>(0, 2);
+                int x1 = (int)(detectionMat.At<float>(0, 3) * frameWidth);
+                int y1 = (int)(detectionMat.At<float>(0, 4) * frameHeight);
+                int x2 = (int)(detectionMat.At<float>(0, 5) * frameWidth);
+                int y2 = (int)(detectionMat.At<float>(0, 6) * frameHeight);
+
+                Rect roi = new Rect(x1, y1, x2 - x1, y2 - y1);
+                var detectedFace = newImage.Clone(roi);
+
+                string uniqueString = Guid.NewGuid().ToString();
+                // create a unique filename here
+                var newFileName = uniqueString + ".jpg";
+                var fileWithPath = Path.Combine(path, newFileName);
+                Mat imageToSave = new Mat();
+                //Save detected face
+                Cv2.Resize(detectedFace, imageToSave, new OpenCvSharp.Size(224, 224));
+                imageToSave.SaveImage(fileWithPath);
+                ms.Close();
+
+                return newFileName;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
 
         public string SaveAugmentedImage(Bitmap image, int personId)
         {

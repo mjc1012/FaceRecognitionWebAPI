@@ -17,6 +17,8 @@ using Microsoft.ML.Transforms;
 using Microsoft.ML.Vision;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.Runtime.CompilerServices;
+using AForge.Imaging.Filters;
+
 namespace FaceRecognitionWebAPI.Services
 {
     public class FaceRecognitionService : IFaceRecognitionService
@@ -37,16 +39,31 @@ namespace FaceRecognitionWebAPI.Services
 
             var path = Path.Combine(Path.Combine(_environment.ContentRootPath, "Faces To Recognize"), face.ImageFile);
 
-            Mat image = new(path);
+            Bitmap image = new(path);
+            image = sharpenImage(image);
+            image = histogramEqualizationColored(image);
 
             ModelInput faceData = new()
             {
-                Image = image.ToBytes(),
+                Image = image.ToMat().ToBytes(),
             };
 
             ModelOutput prediction = _PredictEngine.Value.Predict(faceData);
 
             return prediction.PredictedLabel;
+        }
+
+        public Bitmap sharpenImage(Bitmap image)
+        {
+            GaussianSharpen filter = new GaussianSharpen(4, 11);
+            return filter.Apply(image);
+        }
+
+        public Bitmap histogramEqualizationColored(Bitmap Image)
+        {
+            HistogramEqualization filter = new HistogramEqualization();
+            filter.ApplyInPlace(Image);
+            return Image;
         }
 
         public bool TrainModel()

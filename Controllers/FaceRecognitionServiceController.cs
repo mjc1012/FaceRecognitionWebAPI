@@ -15,16 +15,11 @@ namespace FaceRecognitionWebAPI.Controllers
     [ApiController]
     public class FaceRecognitionServiceController : Controller
     {
-        private readonly IFaceToRecognizeRepository _faceToRecognizeRepository;
-        private readonly IPersonRepository _personRepository;
-        private readonly IFaceRecognitionService _faceRecognitionService;
+        private readonly IUnitOfWork _uow;
         private readonly IMapper _mapper;
-        public FaceRecognitionServiceController(IFaceRecognitionService faceRecognitionService, IFaceToRecognizeRepository faceToRecognizeRepository,
-            IPersonRepository personRepository, IMapper mapper)
+        public FaceRecognitionServiceController(IUnitOfWork uow, IMapper mapper)
         {
-            _faceToRecognizeRepository = faceToRecognizeRepository;
-            _personRepository = personRepository;
-            _faceRecognitionService = faceRecognitionService; ;
+            _uow = uow;
             _mapper = mapper;
         }
 
@@ -33,9 +28,9 @@ namespace FaceRecognitionWebAPI.Controllers
         {
             ResponseApi<PersonDto> response;
 
-            var face = await _faceToRecognizeRepository.GetFaceToRecognize(id);
-            int predictedPersonId = _faceRecognitionService.RecognizeFace(face);
-            var predictedPerson = await _personRepository.GetPerson(predictedPersonId);
+            var face = await _uow.faceToRecognizeRepository.GetFaceToRecognize(id);
+            int predictedPersonId = _uow.faceRecognitionService.RecognizeFace(face);
+            var predictedPerson = await _uow.personRepository.GetPerson(predictedPersonId);
             PersonDto person = _mapper.Map<PersonDto>(predictedPerson);
 
                 if (person != null)
@@ -57,7 +52,7 @@ namespace FaceRecognitionWebAPI.Controllers
 
             ResponseApi<bool> response;
 
-            if (_faceRecognitionService.TrainModel())
+            if (_uow.faceRecognitionService.TrainModel())
             {
                 response = new ResponseApi<bool>() { Status = true, Message = "Model Successfully Trained" };
             }

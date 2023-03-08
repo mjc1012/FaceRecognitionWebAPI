@@ -1,4 +1,5 @@
-﻿using FaceRecognitionWebAPI.Interfaces;
+﻿using FaceRecognitionWebAPI.Helper;
+using FaceRecognitionWebAPI.Interfaces;
 using FaceRecognitionWebAPI.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -59,6 +60,17 @@ namespace FaceRecognitionWebAPI.Data
                     Name = "Duck Face with Eyes Closed",
                     ImageFile = "face_8.jpg"
                 });
+
+            modelBuilder.Entity<Person>().HasData(
+              new Person
+              {
+                  Id = 1,
+                  FirstName = "Admin",
+                  MiddleName = "",
+                  LastName = "Admin",
+                  ValidIdNumber = "Admin",
+                  Password = PasswordHasher.HashPassword("Admin@123"),
+              });
         }
 
         public DbSet<Person> Persons { get; set; }

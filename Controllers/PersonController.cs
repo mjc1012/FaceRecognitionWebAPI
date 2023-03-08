@@ -14,13 +14,11 @@ namespace FaceRecognitionWebAPI.Controllers
     [ApiController]
     public class PersonController : Controller
     {
-        private readonly IPersonRepository _personRepository;
         private readonly IUnitOfWork _uow;
         private readonly IMapper _mapper;
-        public PersonController(IUnitOfWork uow, IPersonRepository personRepository, IMapper mapper)
+        public PersonController(IUnitOfWork uow,  IMapper mapper)
         {
             _uow = uow;
-            _personRepository = personRepository;
             _mapper= mapper;
         }
 
@@ -94,13 +92,14 @@ namespace FaceRecognitionWebAPI.Controllers
             }
         }
 
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetPersons()
         {
             ResponseApi<List<PersonDto>> response;
             try
             {
-                List<PersonDto> people = _mapper.Map<List<PersonDto>>(await _personRepository.GetPeople());
+                List<PersonDto> people = _mapper.Map<List<PersonDto>>(await _uow.personRepository.GetPeople());
 
                 if (people.Count > 0)
                 {
@@ -120,6 +119,7 @@ namespace FaceRecognitionWebAPI.Controllers
 
         }
 
+        [Authorize]
         [HttpGet("{validIdNumber}")]
         public async Task<IActionResult> GetPerson(string validIdNumber)
         {
@@ -127,7 +127,7 @@ namespace FaceRecognitionWebAPI.Controllers
             try
             {
 
-                Person person = await _personRepository.GetPerson(validIdNumber);
+                Person person = await _uow.personRepository.GetPerson(validIdNumber);
 
                 if (person != null)
                 {
@@ -149,16 +149,17 @@ namespace FaceRecognitionWebAPI.Controllers
 
 
 
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> CreatePerson([FromBody] PersonDto request)
         {
             ResponseApi<PersonDto> response;
             try
             {
-                request.Password = PasswordHasher.HashPassword(request.FirstName + "Alliance" + request.LastName + "@123");
+                request.Password = PasswordHasher.HashPassword(request.FirstName.Replace(" ", String.Empty) + "Alliance" + request.LastName + "@123");
                 Person person = _mapper.Map<Person>(request);
 
-                Person personCreated = await _personRepository.CreatePerson(person);
+                Person personCreated = await _uow.personRepository.CreatePerson(person);
 
                 if (personCreated.Id != 0)
                 {
@@ -185,7 +186,7 @@ namespace FaceRecognitionWebAPI.Controllers
             try
             {
                 Person person = _mapper.Map<Person>(request);
-                Person personEdited = await _personRepository.UpdatePerson(person);
+                Person personEdited = await _uow.personRepository.UpdatePerson(person);
 
                 response = new ResponseApi<PersonDto>() { Status = true, Message = "Person Updated", Value = _mapper.Map<PersonDto>(personEdited) };
 
@@ -205,11 +206,11 @@ namespace FaceRecognitionWebAPI.Controllers
             ResponseApi<PersonDto> response;
             try
             {
-                Person personFound = await _personRepository.GetPerson(request.ValidIdNumber);
+                Person personFound = await _uow.personRepository.GetPerson(request.ValidIdNumber);
                 Person person = _mapper.Map<Person>(request);
                 person.Id = personFound.Id;
-                _personRepository.DetachPerson(personFound);
-                Person personEdited = await _personRepository.UpdatePerson(person);
+                _uow.personRepository.DetachPerson(personFound);
+                Person personEdited = await _uow.personRepository.UpdatePerson(person);
 
                 response = new ResponseApi<PersonDto>() { Status = true, Message = "Person Updated", Value = _mapper.Map<PersonDto>(personEdited) };
 
@@ -222,6 +223,7 @@ namespace FaceRecognitionWebAPI.Controllers
             }
         }
 
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePerson(int id)
         {
@@ -229,8 +231,8 @@ namespace FaceRecognitionWebAPI.Controllers
             try
             {
 
-                Person employee = await _personRepository.GetPerson(id);
-                bool deleted = await _personRepository.DeletePerson(employee);
+                Person employee = await _uow.personRepository.GetPerson(id);
+                bool deleted = await _uow.personRepository.DeletePerson(employee);
 
                 if (deleted)
                 {
@@ -258,8 +260,8 @@ namespace FaceRecognitionWebAPI.Controllers
             try
             {
 
-                Person employee = await _personRepository.GetPerson(validIdNumber);
-                bool deleted = await _personRepository.DeletePerson(employee);
+                Person employee = await _uow.personRepository.GetPerson(validIdNumber);
+                bool deleted = await _uow.personRepository.DeletePerson(employee);
 
                 if (deleted)
                 {
@@ -279,6 +281,7 @@ namespace FaceRecognitionWebAPI.Controllers
             }
         }
 
+        [Authorize]
         [HttpPut("password")]
         public async Task<IActionResult> UpdatePassword([FromBody] PersonDto request)
         {
@@ -307,27 +310,6 @@ namespace FaceRecognitionWebAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, response);
             }
         }
-
-
-        //[HttpGet("{id}")]
-        //[ProducesResponseType(200, Type = typeof(Person))]
-        //[ProducesResponseType(400)]
-        //public IActionResult GetPersonById(int id)
-        //{
-        //    if(!_personRepository.PersonExists(id))
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    var person = _mapper.Map<PersonDto>(_personRepository.GetPersonById(id));
-
-        //    if (!ModelState.IsValid)
-        //    {
-        //        return BadRequest(ModelState);
-        //    }
-
-        //    return Ok(person);
-        //}
 
 
 

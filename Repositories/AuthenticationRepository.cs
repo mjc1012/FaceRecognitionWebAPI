@@ -52,7 +52,7 @@ namespace FaceRecognitionWebAPI.Repositories
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = identity,
-                Expires = DateTime.Now.AddSeconds(10),
+                Expires = DateTime.Now.AddMinutes(5),
                 SigningCredentials = credentials,
             };
             var token = jwtTokenHandler.CreateToken(tokenDescriptor);
