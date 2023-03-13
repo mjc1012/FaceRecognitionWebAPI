@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using FaceRecognitionWebAPI.Dto;
-using FaceRecognitionWebAPI.Helper;
 using FaceRecognitionWebAPI.Interfaces;
 using FaceRecognitionWebAPI.Models;
 using FaceRecognitionWebAPI.Repository;
@@ -24,7 +23,7 @@ namespace FaceRecognitionWebAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateFaceRecognitionStatus([FromBody] FaceRecognitionStatusDto request)
         {
-            ResponseApi<FaceRecognitionStatusDto> response;
+            ResponseDto<FaceRecognitionStatusDto> response;
             try
             {
                 var status = _mapper.Map<FaceRecognitionStatus>(request);
@@ -36,17 +35,17 @@ namespace FaceRecognitionWebAPI.Controllers
 
                 if (statusCreated.Id != 0)
                 {
-                    response = new ResponseApi<FaceRecognitionStatusDto>() { Status = true, Message = "Face Recognition Status Created", Value = _mapper.Map<FaceRecognitionStatusDto>(statusCreated) };
+                    response = new ResponseDto<FaceRecognitionStatusDto>() { Status = true, Message = "Face Recognition Status Created", Value = _mapper.Map<FaceRecognitionStatusDto>(statusCreated) };
                 }
                 else
                 {
-                    response = new ResponseApi<FaceRecognitionStatusDto>() { Status = false, Message = "Could not create" };
+                    response = new ResponseDto<FaceRecognitionStatusDto>() { Status = false, Message = "Could not create" };
                 }
                 return StatusCode(StatusCodes.Status200OK, response);
             }
             catch (Exception ex)
             {
-                response = new ResponseApi<FaceRecognitionStatusDto>() { Status = false, Message = ex.Message };
+                response = new ResponseDto<FaceRecognitionStatusDto>() { Status = false, Message = ex.Message };
                 return StatusCode(StatusCodes.Status500InternalServerError, response);
             }
         }

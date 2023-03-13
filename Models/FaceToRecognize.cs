@@ -5,7 +5,7 @@ namespace FaceRecognitionWebAPI.Models
     public class FaceToRecognize
     {
         public int Id { get; set; }
-        public string? ImageFile { get; set; }     
+        public string ImageFile { get; set; }     
 
         public DateTime LoggedTime { get; set; }
 

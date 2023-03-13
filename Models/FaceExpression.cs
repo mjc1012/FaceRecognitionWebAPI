@@ -8,6 +8,6 @@
 
         public string ImageFile { get; set; }
 
-        public ICollection<FaceToTrain>? FacesToTrain { get; set; }
+        public ICollection<FaceToTrain> FacesToTrain { get; set; }
     }
 }

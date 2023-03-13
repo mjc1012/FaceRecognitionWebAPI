@@ -19,36 +19,6 @@ namespace FaceRecognitionWebAPI.Services
             _environment = environment;
         }
 
-        //public string SaveImage(string base64String, int personId)
-        //{
-        //    try
-        //    {
-        //        var path = (personId == -1) ? Path.Combine(_environment.ContentRootPath, "Faces To Recognize") : Path.Combine(Path.Combine(_environment.ContentRootPath, "Face Dataset"), personId.ToString());
-        //        if (!Directory.Exists(path))
-        //        {
-        //            Directory.CreateDirectory(path);
-        //        }
-
-        //        byte[] imageBytes = Convert.FromBase64String(base64String);
-        //        MemoryStream ms = new MemoryStream(imageBytes, 0, imageBytes.Length);
-        //        ms.Write(imageBytes, 0, imageBytes.Length);
-        //        Image image = Image.FromStream(ms, true);
-
-        //        string uniqueString = Guid.NewGuid().ToString();
-        //        // create a unique filename here
-        //        var newFileName = uniqueString + ".jpg";
-        //        var fileWithPath = Path.Combine(path, newFileName);
-        //        image.Save(fileWithPath);
-        //        ms.Close();
-
-        //        return newFileName;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw ex;
-        //    }
-        //}
-
         public string SaveImage(string base64String, int personId)
         {
             try
@@ -60,7 +30,7 @@ namespace FaceRecognitionWebAPI.Services
                 }
 
                 byte[] imageBytes = Convert.FromBase64String(base64String);
-                MemoryStream ms = new MemoryStream(imageBytes, 0, imageBytes.Length);
+                MemoryStream ms = new(imageBytes, 0, imageBytes.Length);
                 ms.Write(imageBytes, 0, imageBytes.Length);
                 Image image = Image.FromStream(ms, true);
 
@@ -88,14 +58,14 @@ namespace FaceRecognitionWebAPI.Services
                 int x2 = (int)(detectionMat.At<float>(0, 5) * frameWidth);
                 int y2 = (int)(detectionMat.At<float>(0, 6) * frameHeight);
 
-                Rect roi = new Rect(x1, y1, x2 - x1, y2 - y1);
+                Rect roi = new(x1, y1, x2 - x1, y2 - y1);
                 var detectedFace = newImage.Clone(roi);
 
                 string uniqueString = Guid.NewGuid().ToString();
                 // create a unique filename here
                 var newFileName = uniqueString + ".jpg";
                 var fileWithPath = Path.Combine(path, newFileName);
-                Mat imageToSave = new Mat();
+                Mat imageToSave = new();
                 //Save detected face
                 Cv2.Resize(detectedFace, imageToSave, new OpenCvSharp.Size(224, 224));
                 imageToSave.SaveImage(fileWithPath);
@@ -103,9 +73,9 @@ namespace FaceRecognitionWebAPI.Services
 
                 return newFileName;
             }
-            catch (Exception ex)
+            catch (Exception )
             {
-                throw ex;
+                throw ;
             }
         }
 
@@ -121,7 +91,7 @@ namespace FaceRecognitionWebAPI.Services
                 var newFileName = uniqueString + ".jpg";
                 var fileWithPath = Path.Combine(path, newFileName);
 
-                Mat newImage = new Mat();
+                Mat newImage = new();
                 Cv2.Resize(image.ToMat(), newImage, new OpenCvSharp.Size(244, 244));
 
 
@@ -136,7 +106,7 @@ namespace FaceRecognitionWebAPI.Services
             }
         }
 
-        public async Task<bool> DeleteImage(FaceToTrain face, List<AugmentedFace> augmentedFaces)
+        public bool DeleteImage(FaceToTrain face, List<AugmentedFace> augmentedFaces)
         {
             try
             {
@@ -183,19 +153,39 @@ namespace FaceRecognitionWebAPI.Services
             }
         }
 
+        public bool DeleteFolder(int id)
+        {
+            try
+            {
+                var augmentedFacePath = Path.Combine(_environment.ContentRootPath, "Augmented Faces" + "\\" + id.ToString());
+
+                var faceToTrainPath = Path.Combine(_environment.ContentRootPath, "Face Dataset" + "\\" + id.ToString());
+                if (System.IO.File.Exists(augmentedFacePath))
+                {
+                    File.Delete(augmentedFacePath);
+                }
+
+                if (System.IO.File.Exists(faceToTrainPath))
+                {
+                    File.Delete(faceToTrainPath);
+                }
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
         public string ImagePathToBase64(string path)
         {
-            using (System.Drawing.Image image = System.Drawing.Image.FromFile(path))
-            {
-                using (MemoryStream m = new MemoryStream())
-                {
-                    image.Save(m, image.RawFormat);
-                    byte[] imageBytes = m.ToArray();
-                    string base64String = Convert.ToBase64String(imageBytes);
-                    m.Close();
-                    return base64String;
-                }
-            }
+            using System.Drawing.Image image = System.Drawing.Image.FromFile(path);
+            using MemoryStream m = new();
+            image.Save(m, image.RawFormat);
+            byte[] imageBytes = m.ToArray();
+            string base64String = Convert.ToBase64String(imageBytes);
+            m.Close();
+            return base64String;
         }
     }
 }

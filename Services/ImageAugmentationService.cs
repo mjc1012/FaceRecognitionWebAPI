@@ -46,19 +46,19 @@ namespace FaceRecognitionWebAPI.Services
                 var image = new Bitmap(path);
 
 
-                image = sharpenImage(image);
-                image = histogramEqualizationColored(image);
-                var imageVariations1 = imageFlip(image);
+                image = SharpenImage(image);
+                image = HistogramEqualizationColored(image);
+                var imageVariations1 = ImageFlip(image);
 
                 foreach (Bitmap v1 in imageVariations1)
                 {
-                    var imageVariations2 = imageRotate(v1);
+                    var imageVariations2 = ImageRotate(v1);
 
                     foreach (Bitmap v2 in imageVariations2)
                     {
-                        var imageVariations3 = imageFilters(v2);
+                        var imageVariations3 = ImageFilters(v2);
 
-                        Random random = new Random();
+                        Random random = new();
                         var randomNumbers = Enumerable.Range(0, 5).OrderBy(x => random.Next()).Take(5).ToList();
 
                         for (int i = 0; i < 5; i++)
@@ -68,19 +68,19 @@ namespace FaceRecognitionWebAPI.Services
                             switch (randomNumbers[i])
                             {
                                 case 0:
-                                    v4 = blurImage(imageVariations3[i]);
+                                    v4 = BlurImage(imageVariations3[i]);
                                     break;
                                 case 1:
-                                    v4 = randomCutout(imageVariations3[i].ToMat());
+                                    v4 = RandomCutout(imageVariations3[i].ToMat());
                                     break;
                                 case 2:
-                                    v4 = additiveNoise(imageVariations3[i]);
+                                    v4 = AdditiveNoise(imageVariations3[i]);
                                     break;
                                 case 3:
-                                    v4 = imageDistortion(imageVariations3[i]);
+                                    v4 = ImageDistortion(imageVariations3[i]);
                                     break;
                                 case 4:
-                                    v4 = saltAndPepper(imageVariations3[i]);
+                                    v4 = SaltAndPepper(imageVariations3[i]);
                                     break;
                             }
                             await SaveImage(v4, face);
@@ -88,9 +88,9 @@ namespace FaceRecognitionWebAPI.Services
                     }
                 }
             }
-            catch(Exception ex)
+            catch(Exception)
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -103,7 +103,7 @@ namespace FaceRecognitionWebAPI.Services
             try
             {
                 var imageFile = _imageService.SaveAugmentedImage(image, face.Person.Id);
-                AugmentedFace augmentedFace = new AugmentedFace
+                AugmentedFace augmentedFace = new()
                 {
                     ImageFile = imageFile,
                     FaceToTrain = face
@@ -111,144 +111,141 @@ namespace FaceRecognitionWebAPI.Services
 
                 await _augmentedFaceRepository.CreateAugmentedFace(augmentedFace);
             }
-            catch(Exception ex)
+            catch(Exception )
             {
-                throw ex;
+                throw;
             }
             
         }
 
-        public static Bitmap histogramEqualizationColored(Bitmap Image)
+        public static Bitmap HistogramEqualizationColored(Bitmap Image)
         {
-            HistogramEqualization filter = new HistogramEqualization();
+            HistogramEqualization filter = new();
             filter.ApplyInPlace(Image);
             return Image;
         }
 
-        public static Bitmap imageDistortion(Bitmap image)
+        public static Bitmap ImageDistortion(Bitmap image)
         {
-            WaterWave filter = new WaterWave();
-            filter.HorizontalWavesCount = 2;
-            filter.HorizontalWavesAmplitude = 2;
-            filter.VerticalWavesCount = 2;
-            filter.VerticalWavesAmplitude = 2;
+            WaterWave filter = new()
+            {
+                HorizontalWavesCount = 2,
+                HorizontalWavesAmplitude = 2,
+                VerticalWavesCount = 2,
+                VerticalWavesAmplitude = 2
+            };
             return filter.Apply(image);
         }
 
-        public static Bitmap saltAndPepper(Bitmap image)
+        public static Bitmap SaltAndPepper(Bitmap image)
         {
-            SaltAndPepperNoise filter = new SaltAndPepperNoise(10);
+            SaltAndPepperNoise filter = new(10);
             filter.ApplyInPlace(image);
 
             return image;
         }
 
-        public static Bitmap rotateImage(Bitmap image, int angle)
+        public static Bitmap RotateImage(Bitmap image, int angle)
         {
-            RotateNearestNeighbor filter = new RotateNearestNeighbor(angle, true);
+            RotateNearestNeighbor filter = new(angle, true);
             return filter.Apply(image);
         }
 
-        public static List<Bitmap> imageFlip(Bitmap image)
+        public static List<Bitmap> ImageFlip(Bitmap image)
         {
-            Random random = new Random();
-
             var imageVariations = new List<Bitmap>() {
             { (Bitmap)image.Clone() },
-            { horizontalFlip((Bitmap)image.Clone()) },
+            { HorizontalFlip((Bitmap)image.Clone()) },
             };
             return imageVariations;
         }
 
-        public static List<Bitmap> imageRotate(Bitmap image)
+        public static List<Bitmap> ImageRotate(Bitmap image)
         {
-            Random random = new Random();
-
             var imageVariations = new List<Bitmap>() {
             { (Bitmap)image.Clone() },
-            { rotateImage((Bitmap)image.Clone(),25) },
-            { rotateImage((Bitmap)image.Clone(),-25) },
+            { RotateImage((Bitmap)image.Clone(),25) },
+            { RotateImage((Bitmap)image.Clone(),-25) },
             };
             return imageVariations;
         }
 
 
-        public static Bitmap changeBrightness(Bitmap image, int adjustValue)
+        public static Bitmap ChangeBrightness(Bitmap image, int adjustValue)
         {
-            Random random = new Random();
+            Random random = new();
             if (random.Next(0, 2) == 1) adjustValue = -adjustValue;
-            BrightnessCorrection brightnessCorrection = new BrightnessCorrection(adjustValue);
+            BrightnessCorrection brightnessCorrection = new(adjustValue);
             return brightnessCorrection.Apply(image);
         }
 
-        public static Bitmap changeContrast(Bitmap image, int adjustValue)
+        public static Bitmap ChangeContrast(Bitmap image, int adjustValue)
         {
-            Random random = new Random();
+            Random random = new();
             if (random.Next(0, 2) == 1) adjustValue = -adjustValue;
-            ContrastCorrection contrastCorrection = new ContrastCorrection(adjustValue);
+            ContrastCorrection contrastCorrection = new(adjustValue);
             return contrastCorrection.Apply(image);
         }
 
-        public static Bitmap changeSaturation(Bitmap image, float adjustValue)
+        public static Bitmap ChangeSaturation(Bitmap image, float adjustValue)
         {
-            Random random = new Random();
+            Random random = new();
             if (random.Next(0, 2) == 1) adjustValue = -adjustValue;
-            SaturationCorrection saturationCorrection = new SaturationCorrection(adjustValue / 100);
+            SaturationCorrection saturationCorrection = new(adjustValue / 100);
             return saturationCorrection.Apply(image);
         }
 
-        public static Bitmap changeGamma(Bitmap image, double adjustValue)
+        public static Bitmap ChangeGamma(Bitmap image, double adjustValue)
         {
-            GammaCorrection gammaCorrection = new GammaCorrection(adjustValue / 100);
+            GammaCorrection gammaCorrection = new(adjustValue / 100);
             gammaCorrection.ApplyInPlace(image);
             return image;
         }
 
-        public static Bitmap sharpenImage(Bitmap image)
+        public static Bitmap SharpenImage(Bitmap image)
         {
-            GaussianSharpen filter = new GaussianSharpen(4, 11);
+            GaussianSharpen filter = new(4, 11);
             return filter.Apply(image);
         }
-        public static List<Bitmap> imageFilters(Bitmap image)
+        public static List<Bitmap> ImageFilters(Bitmap image)
         {
-            Random random = new Random();
+            Random random = new();
             var imageVariations = new List<Bitmap>() {
             { (Bitmap)image.Clone() },
-            { changeBrightness((Bitmap)image.Clone(), random.Next(40, 65)) },
-            { changeContrast((Bitmap)image.Clone(), random.Next(40, 65)) },
-            { changeSaturation((Bitmap)image.Clone(), random.Next(20, 35)) },
-            { changeGamma((Bitmap)image.Clone(), random.Next(30, 50)) }
+            { ChangeBrightness((Bitmap)image.Clone(), random.Next(40, 65)) },
+            { ChangeContrast((Bitmap)image.Clone(), random.Next(40, 65)) },
+            { ChangeSaturation((Bitmap)image.Clone(), random.Next(20, 35)) },
+            { ChangeGamma((Bitmap)image.Clone(), random.Next(30, 50)) }
             };
             return imageVariations;
         }
 
 
-        public static Bitmap randomCutout(Mat image)
+        public static Bitmap RandomCutout(Mat image)
         {
-            Random rand = new Random();
+            Random rand = new();
             int x = rand.Next(10, 154);
             int y = rand.Next(10, 154);
             Cv2.Rectangle(image, new OpenCvSharp.Point(x, y), new OpenCvSharp.Point(x + 70, y + 70), Scalar.Black, -1);
             return image.ToBitmap();
         }
 
-        public static Bitmap additiveNoise(Bitmap image)
+        public static Bitmap AdditiveNoise(Bitmap image)
         {
-            Random random = new Random();
             IRandomNumberGenerator generator = new UniformGenerator(new AForge.Range(-50, 50));
-            AdditiveNoise filter = new AdditiveNoise(generator);
+            AdditiveNoise filter = new(generator);
             filter.ApplyInPlace(image);
 
             return image;
         }
 
-        public static Bitmap blurImage(Bitmap image)
+        public static Bitmap BlurImage(Bitmap image)
         {
-            GaussianBlur filter = new GaussianBlur(4, 11);
+            GaussianBlur filter = new(4, 11);
             return filter.Apply(image);
         }
 
-        public static Bitmap horizontalFlip(Bitmap image)
+        public static Bitmap HorizontalFlip(Bitmap image)
         {
             image.RotateFlip(RotateFlipType.RotateNoneFlipX);
             return image;

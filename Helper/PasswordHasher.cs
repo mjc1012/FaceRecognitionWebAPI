@@ -4,7 +4,7 @@ namespace FaceRecognitionWebAPI.Helper
 {
     public class PasswordHasher
     {
-        private static RNGCryptoServiceProvider rng = new();
+        private static readonly RNGCryptoServiceProvider rng = new();
         private static readonly int saltSize = 16;
         private static readonly int hashSize = 16;
         private static readonly int iterations = 10000;

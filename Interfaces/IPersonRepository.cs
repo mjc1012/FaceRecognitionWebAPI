@@ -8,9 +8,9 @@ namespace FaceRecognitionWebAPI.Interfaces
 
         public Task<Person> GetPerson(int id);
 
-        public Task<Person> GetPerson(string validIdNumber);
+        public Task<List<Person>> GetPeople(List<string> validIdNumbers);
 
-        //public Task<bool> PersonExists(int id);
+        public Task<Person> GetPerson(string validIdNumber);
 
         public void DetachPerson(Person person);
 
@@ -19,5 +19,7 @@ namespace FaceRecognitionWebAPI.Interfaces
         public Task<Person> UpdatePerson(Person person);
 
         public Task<bool> DeletePerson(Person person);
+
+        public Task<bool> DeletePeople(List<Person> people);
     }
 }

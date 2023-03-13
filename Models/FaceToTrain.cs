@@ -6,7 +6,7 @@ namespace FaceRecognitionWebAPI.Models
     public class FaceToTrain
     {
         public int Id { get; set; }
-        public string? ImageFile { get; set; }
+        public string ImageFile { get; set; }
 
         public int PersonId { get; set; }
 
@@ -16,6 +16,6 @@ namespace FaceRecognitionWebAPI.Models
 
         public FaceExpression FaceExpression { get; set; }
 
-        public ICollection<AugmentedFace>? AugmentedFaces { get; set; }
+        public ICollection<AugmentedFace> AugmentedFaces { get; set; }
     }
 }

@@ -20,20 +20,33 @@ namespace FaceRecognitionWebAPI.Respository
             {
                 return await _context.Persons.OrderBy(p => p.Id).Include(p => p.FacesToTrain).Include(p => p.FaceRecognitionStatuses).ToListAsync();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw ex;
+                throw;
             }
         }
+
+        public async Task<List<Person>> GetPeople(List<string> validIdNumbers)
+        {
+            try
+            {
+                return await _context.Persons.Where(p => validIdNumbers.Contains(p.ValidIdNumber)).Include(p => p.FacesToTrain).Include(p => p.FaceRecognitionStatuses).ToListAsync();
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
         public async Task<Person> GetPerson(int id)
         {
             try
             {
                 return await _context.Persons.Where(p => p.Id == id).Include(p => p.FacesToTrain).Include(p => p.FaceRecognitionStatuses).FirstOrDefaultAsync();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -43,16 +56,11 @@ namespace FaceRecognitionWebAPI.Respository
             {
                 return await _context.Persons.Where(p => p.ValidIdNumber.Trim() == validIdNumber.Trim()).FirstOrDefaultAsync();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw ex;
+                throw;
             }
         }
-
-        //public bool PersonExists(int id)
-        //{
-        //    return _context.Persons.Any(p => p.Id == id);
-        //}
 
         public void DetachPerson(Person person)
         {
@@ -60,9 +68,9 @@ namespace FaceRecognitionWebAPI.Respository
             {
                 _context.Entry(person).State = EntityState.Detached;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw ex;
+                throw;
             }
 
         }
@@ -74,9 +82,9 @@ namespace FaceRecognitionWebAPI.Respository
                 await _context.SaveChangesAsync();
                 return person;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -88,9 +96,9 @@ namespace FaceRecognitionWebAPI.Respository
                 await _context.SaveChangesAsync();
                 return person;
             }
-            catch (Exception ex)
+            catch (Exception )
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -102,9 +110,23 @@ namespace FaceRecognitionWebAPI.Respository
                 await _context.SaveChangesAsync();
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw ex;
+                throw;
+            }
+        }
+
+        public async Task<bool> DeletePeople(List<Person> people)
+        {
+            try
+            {
+                _context.Persons.RemoveRange(people);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception)
+            {
+                throw;
             }
         }
     }

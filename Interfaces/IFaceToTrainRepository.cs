@@ -17,19 +17,5 @@ namespace FaceRecognitionWebAPI.Interfaces
 
         public Task<bool> DeleteFaceToTrain(FaceToTrain faceToTrain);
 
-        //bool Save();
-
-        //ICollection<FaceToTrain> GetFacesToTrainByExpressionId(int id);
-
-
-        //int GetFacesToTrainCountByPersonId(int id);
-
-        //FaceToTrain GetFaceToTrainByImageName(string imageFile);
-
-        
-
-        //bool FaceToTrainExists(int id);
-
-        //bool UpdateFaceToTrain(FaceToTrain faceToTrain);
     }
 }

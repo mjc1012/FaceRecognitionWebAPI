@@ -1,7 +1,6 @@
-                                            using FaceRecognitionWebAPI;
+using FaceRecognitionWebAPI;
 using FaceRecognitionWebAPI.Data;
 using FaceRecognitionWebAPI.Interfaces;
-using FaceRecognitionWebAPI.Repositories;
 using FaceRecognitionWebAPI.Repository;
 using FaceRecognitionWebAPI.Respository;
 using FaceRecognitionWebAPI.Services;

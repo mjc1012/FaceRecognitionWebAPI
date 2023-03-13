@@ -22,9 +22,9 @@ namespace FaceRecognitionWebAPI.Repository
             {
                 return await _context.FacesToTrain.OrderBy(p => p.Id).Include(p => p.Person).Include(p => p.FaceExpression).Include(p => p.AugmentedFaces).ToListAsync();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw ex;
+                throw;
             }
         }
         public async Task<List<FaceToTrain>> GetFacesToTrain(int personId)
@@ -33,9 +33,9 @@ namespace FaceRecognitionWebAPI.Repository
             {
                 return await _context.FacesToTrain.Where(p => p.Person.Id == personId).Include(p => p.Person).Include(p => p.FaceExpression).Include(p => p.AugmentedFaces).ToListAsync();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -45,9 +45,9 @@ namespace FaceRecognitionWebAPI.Repository
             {
                 return await _context.FacesToTrain.Where(p => p.Id == id).FirstOrDefaultAsync();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -58,9 +58,9 @@ namespace FaceRecognitionWebAPI.Repository
             {
                 return await _context.FacesToTrain.AnyAsync(p => p.Person.Id == personId && p.FaceExpression.Id == expressionId);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -77,9 +77,9 @@ namespace FaceRecognitionWebAPI.Repository
                 }
                 return null;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -92,9 +92,9 @@ namespace FaceRecognitionWebAPI.Repository
                 await _context.SaveChangesAsync();
                 return faceToTrain;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -108,47 +108,10 @@ namespace FaceRecognitionWebAPI.Repository
                 await _context.SaveChangesAsync();
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw ex;
+                throw;
             }
         }
-
-        //public bool Save()
-        //{
-        //    var saved = _context.SaveChanges();
-        //    return saved > 0;
-        //}
-
-        //public bool UpdateFaceToTrain(FaceToTrain faceToTrain)
-        //{
-        //    _context.Update(faceToTrain);
-
-        //    return Save();
-        //}
-
-        //public bool FaceToTrainExists(int id)
-        //{
-        //    return _context.FacesToTrain.Any(p => p.Id == id);
-        //}
-
-        //public FaceToTrain GetFaceToTrainByImageName(string imageFile)
-        //{
-        //    return _context.FacesToTrain.Where(p => p.ImageFile.Trim() == imageFile.Trim()).FirstOrDefault();
-        //}
-
-
-        
-
-        //public ICollection<FaceToTrain> GetFacesToTrainByExpressionId(int id)
-        //{
-        //    return _context.FacesToTrain.Where(p => p.FaceExpression.Id == id).ToList();
-
-        //}
-
-        //public int GetFacesToTrainCountByPersonId(int id)
-        //{
-        //    return _context.FacesToTrain.Where(p => p.Person.Id == id).Count();
-        //}
     }
 }

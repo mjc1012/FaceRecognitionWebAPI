@@ -192,6 +192,9 @@ namespace FaceRecognitionWebAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
+                    b.Property<string>("AccessToken")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("FirstName")
                         .HasColumnType("nvarchar(max)");
 
@@ -210,15 +213,24 @@ namespace FaceRecognitionWebAPI.Migrations
                     b.Property<DateTime>("RefreshTokenExpiryTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Token")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("ValidIdNumber")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.ToTable("Persons");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            FirstName = "Admin",
+                            LastName = "Admin",
+                            MiddleName = "",
+                            Password = "g66lU9EglPcZo3wRuGi9ZNO63eutXzEG+WxTPvyOLOE=",
+                            RefreshTokenExpiryTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ValidIdNumber = "Admin"
+                        });
                 });
 
             modelBuilder.Entity("FaceRecognitionWebAPI.Models.AugmentedFace", b =>

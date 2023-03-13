@@ -7,7 +7,7 @@ namespace FaceRecognitionWebAPI.Models
     {
         public int Id { get; set; }
 
-        public string? ImageFile { get; set; }
+        public string ImageFile { get; set; }
 
         public int FaceToTrainId { get; set; }   
 

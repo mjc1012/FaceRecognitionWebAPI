@@ -35,13 +35,13 @@ namespace FaceRecognitionWebAPI.Services
         public int RecognizeFace(FaceToRecognize face)
         {
             ITransformer mlModel = _mlContext.Model.Load(Path.Combine(_environment.ContentRootPath, "Face Recognition Model\\FaceRecognitionModel.zip"), out var _);
-            Lazy<PredictionEngine<ModelInput, ModelOutput>> _PredictEngine = new Lazy<PredictionEngine<ModelInput, ModelOutput>>(() => _mlContext.Model.CreatePredictionEngine<ModelInput, ModelOutput>(mlModel), true);
+            Lazy<PredictionEngine<ModelInput, ModelOutput>> _PredictEngine = new(() => _mlContext.Model.CreatePredictionEngine<ModelInput, ModelOutput>(mlModel), true);
 
             var path = Path.Combine(Path.Combine(_environment.ContentRootPath, "Faces To Recognize"), face.ImageFile);
 
             Bitmap image = new(path);
-            image = sharpenImage(image);
-            image = histogramEqualizationColored(image);
+            image = SharpenImage(image);
+            image = HistogramEqualizationColored(image);
 
             ModelInput faceData = new()
             {
@@ -53,15 +53,15 @@ namespace FaceRecognitionWebAPI.Services
             return prediction.PredictedLabel;
         }
 
-        public Bitmap sharpenImage(Bitmap image)
+        public Bitmap SharpenImage(Bitmap image)
         {
-            GaussianSharpen filter = new GaussianSharpen(4, 11);
+            GaussianSharpen filter = new(4, 11);
             return filter.Apply(image);
         }
 
-        public Bitmap histogramEqualizationColored(Bitmap Image)
+        public Bitmap HistogramEqualizationColored(Bitmap Image)
         {
-            HistogramEqualization filter = new HistogramEqualization();
+            HistogramEqualization filter = new();
             filter.ApplyInPlace(Image);
             return Image;
         }

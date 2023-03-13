@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using FaceRecognitionWebAPI.Dto;
-using FaceRecognitionWebAPI.Helper;
 using FaceRecognitionWebAPI.Interfaces;
 using FaceRecognitionWebAPI.Models;
 using FaceRecognitionWebAPI.Respository;
@@ -26,7 +25,7 @@ namespace FaceRecognitionWebAPI.Controllers
         [HttpGet("recognize-face/{id}")]
         public async Task<IActionResult> RecognizeFace(int id)
         {
-            ResponseApi<PersonDto> response;
+            ResponseDto<PersonDto> response;
 
             var face = await _uow.faceToRecognizeRepository.GetFaceToRecognize(id);
             int predictedPersonId = _uow.faceRecognitionService.RecognizeFace(face);
@@ -35,11 +34,11 @@ namespace FaceRecognitionWebAPI.Controllers
 
                 if (person != null)
                 {
-                    response = new ResponseApi<PersonDto>() { Status = true, Message = "Got Predicted Person", Value = person };
+                    response = new ResponseDto<PersonDto>() { Status = true, Message = "Got Predicted Person", Value = person };
                 }
                 else
                 {
-                    response = new ResponseApi<PersonDto>() { Status = false, Message = "No data" };
+                    response = new ResponseDto<PersonDto>() { Status = false, Message = "No data" };
                 }
                 return StatusCode(StatusCodes.Status200OK, response);
            
@@ -50,15 +49,15 @@ namespace FaceRecognitionWebAPI.Controllers
         public IActionResult TrainModel()
         {
 
-            ResponseApi<bool> response;
+            ResponseDto<bool> response;
 
             if (_uow.faceRecognitionService.TrainModel())
             {
-                response = new ResponseApi<bool>() { Status = true, Message = "Model Successfully Trained" };
+                response = new ResponseDto<bool>() { Status = true, Message = "Model Successfully Trained" };
             }
             else
             {
-                response = new ResponseApi<bool>() { Status = false, Message = "Training Model was Unsuccessful" };
+                response = new ResponseDto<bool>() { Status = false, Message = "Training Model was Unsuccessful" };
             }
             return StatusCode(StatusCodes.Status200OK, response);
         }
