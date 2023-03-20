@@ -10,6 +10,7 @@ namespace FaceRecognitionWebAPI.Helper
         public MappingProfiles()
         {
             CreateMap<Person, PersonDto>();
+
             CreateMap<PersonDto, Person>()
                 .ForMember(
                 destiny => destiny.FacesToTrain,
@@ -25,6 +26,7 @@ namespace FaceRecognitionWebAPI.Helper
                 destiny => destiny.Base64String,
                 opt => opt.Ignore()
                 );
+
             CreateMap<FaceToTrainDto, FaceToTrain>()
                 .ForMember(
                 destiny => destiny.Person,
@@ -44,6 +46,7 @@ namespace FaceRecognitionWebAPI.Helper
                 destiny => destiny.Base64String,
                 opt => opt.Ignore()
                 );
+
             CreateMap<FaceToRecognizeDto, FaceToRecognize>()
                .ForMember(
                destiny => destiny.LoggedTime,
@@ -55,6 +58,7 @@ namespace FaceRecognitionWebAPI.Helper
                );
 
             CreateMap<FaceExpression, FaceExpressionDto>();
+
             CreateMap<FaceExpressionDto, FaceExpression>()
                 .ForMember(
                 destiny => destiny.FacesToTrain,
@@ -62,6 +66,7 @@ namespace FaceRecognitionWebAPI.Helper
                 );
 
             CreateMap<AugmentedFace, AugmentedFaceDto>();
+
             CreateMap<AugmentedFaceDto, AugmentedFace>()
                 .ForMember(
                 destiny => destiny.FaceToTrain,
@@ -69,6 +74,7 @@ namespace FaceRecognitionWebAPI.Helper
                 ); ;
 
             CreateMap<FaceRecognitionStatus, FaceRecognitionStatusDto>();
+
             CreateMap<FaceRecognitionStatusDto, FaceRecognitionStatus>()
                 .ForMember(
                 destiny => destiny.FaceToRecognize,

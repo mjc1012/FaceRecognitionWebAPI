@@ -11,33 +11,47 @@ namespace FaceRecognitionWebAPI.Helper
 
         public static string HashPassword(string password)
         {
-            byte[] salt;
-            rng.GetBytes(salt = new byte[saltSize]);
-            var key = new Rfc2898DeriveBytes(password, salt, iterations);
-            var hash = key.GetBytes(hashSize);
-            var hashBytes = new byte[saltSize + hashSize];
-            Array.Copy(salt, 0, hashBytes, 0, saltSize);
-            Array.Copy(hash, 0, hashBytes, saltSize, hashSize);
-            var base64Hash = Convert.ToBase64String(hashBytes);
-            return base64Hash;
+            try
+            {
+                byte[] salt;
+                rng.GetBytes(salt = new byte[saltSize]);
+                Rfc2898DeriveBytes key = new(password, salt, iterations);
+                byte[] hash = key.GetBytes(hashSize);
+                byte[] hashBytes = new byte[saltSize + hashSize];
+                Array.Copy(salt, 0, hashBytes, 0, saltSize);
+                Array.Copy(hash, 0, hashBytes, saltSize, hashSize);
+                string base64Hash = Convert.ToBase64String(hashBytes);
+                return base64Hash;
+            }
+            catch(Exception)
+            {
+                throw;
+            }
         }
 
         public static bool VerifyPassword(string password, string base64Hash)
         {
-            var hashBytes = Convert.FromBase64String(base64Hash);
-            var salt = new byte[saltSize];
-            Array.Copy(hashBytes, 0, salt, 0, saltSize);
-            var key = new Rfc2898DeriveBytes(password, salt, iterations);
-            byte[] hash = key.GetBytes(hashSize);
-
-            for (int i = 0; i < hashSize; i++)
+            try
             {
-                if (hashBytes[i + saltSize] != hash[i])
+                byte[] hashBytes = Convert.FromBase64String(base64Hash);
+                byte[] salt = new byte[saltSize];
+                Array.Copy(hashBytes, 0, salt, 0, saltSize);
+                Rfc2898DeriveBytes key = new(password, salt, iterations);
+                byte[] hash = key.GetBytes(hashSize);
+
+                for (int i = 0; i < hashSize; i++)
                 {
-                    return false;
+                    if (hashBytes[i + saltSize] != hash[i])
+                    {
+                        return false;
+                    }
                 }
+                return true;
             }
-            return true;
+            catch(Exception)
+            {
+                throw;
+            }
         }
     }
 }

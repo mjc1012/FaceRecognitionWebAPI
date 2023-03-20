@@ -20,7 +20,7 @@ namespace FaceRecognitionWebAPI.Repository
         {
             try
             {
-                return await _context.FacesToTrain.OrderBy(p => p.Id).Include(p => p.Person).Include(p => p.FaceExpression).Include(p => p.AugmentedFaces).ToListAsync();
+                return await _context.FacesToTrain.OrderByDescending(p => p.Id).Include(p => p.Person).Include(p => p.FaceExpression).Include(p => p.AugmentedFaces).ToListAsync();
             }
             catch (Exception)
             {
@@ -68,9 +68,9 @@ namespace FaceRecognitionWebAPI.Repository
         {
             try
             {
-                foreach (var faceExpression in faceExpressions)
+                foreach (FaceExpression faceExpression in faceExpressions)
                 {
-                    if (!(await FaceToTrainWithFaceExpressionExists(id, faceExpression.Id)))
+                    if (!await FaceToTrainWithFaceExpressionExists(id, faceExpression.Id))
                     {
                         return faceExpression;
                     }

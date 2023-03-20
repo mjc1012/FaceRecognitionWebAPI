@@ -58,7 +58,7 @@ namespace FaceRecognitionWebAPI.Controllers
 
                 if (faces.Count > 0)
                 {
-                    response = new ResponseDto<List<FaceToTrainDto>>() { Status = true, Message = "Got Person's Faces To Train", Value = faces };
+                    response = new ResponseDto<List<FaceToTrainDto>>() { Status = true, Message = "Got User's Faces To Train", Value = faces };
                 }
                 else
                 {
@@ -126,7 +126,7 @@ namespace FaceRecognitionWebAPI.Controllers
                 }
                 else
                 {
-                    response = new ResponseDto<FaceToTrainDto>() { Status = false, Message = "Could not create" };
+                    response = new ResponseDto<FaceToTrainDto>() { Status = false, Message = "Face To Train Not Created" };
                 }
                 return StatusCode(StatusCodes.Status200OK, response);
             }
@@ -149,9 +149,10 @@ namespace FaceRecognitionWebAPI.Controllers
 
                 FaceToTrain face = await _uow.faceToTrainRepository.GetFaceToTrain(id);
                 List<AugmentedFace> augmentedFaces = await _uow.augmentedFaceRepository.GetAugmentedFaces(face.Id);
-                if (!(_uow.imageService.DeleteImage(face, augmentedFaces)))
+                if (!_uow.imageService.DeleteImage(face, augmentedFaces))
                 {
-                    response = new ResponseDto<bool>() { Status = true, Message = "Could not delete" };
+                    response = new ResponseDto<bool>() { Status = true, Message = "Something went wrong" };
+                    return StatusCode(StatusCodes.Status200OK, response);
                 }
                 bool deleted = await _uow.faceToTrainRepository.DeleteFaceToTrain(face);
 
@@ -161,7 +162,7 @@ namespace FaceRecognitionWebAPI.Controllers
                 }
                 else
                 {
-                    response = new ResponseDto<bool>() { Status = true, Message = "Could not delete" };
+                    response = new ResponseDto<bool>() { Status = true, Message = "Face To Train Not Deleted" };
                 }
 
                 return StatusCode(StatusCodes.Status200OK, response);

@@ -5,6 +5,7 @@ namespace FaceRecognitionWebAPI.Models
 {
     public class FaceToTrain
     {
+        [Key]
         public int Id { get; set; }
         public string ImageFile { get; set; }
 

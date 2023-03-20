@@ -34,13 +34,13 @@ namespace FaceRecognitionWebAPI.Controllers
 
                 FaceToRecognize faceCreated = await _uow.faceToRecognizeRepository.CreateFaceToRecognize(face);
 
-                if (faceCreated.Id != 0)
+                if (faceCreated != null)
                 {
                     response = new ResponseDto<FaceToRecognizeDto>() { Status = true, Message = "Face To Recognize Created", Value = _mapper.Map<FaceToRecognizeDto>(faceCreated) };
                 }
                 else
                 {
-                    response = new ResponseDto<FaceToRecognizeDto>() { Status = false, Message = "Could not create" };
+                    response = new ResponseDto<FaceToRecognizeDto>() { Status = false, Message = "Face To Recognize Not Created" };
                 }
                 return StatusCode(StatusCodes.Status200OK, response);
             }

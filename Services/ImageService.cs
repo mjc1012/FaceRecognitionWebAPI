@@ -13,17 +13,19 @@ namespace FaceRecognitionWebAPI.Services
     {
 
         private readonly IWebHostEnvironment _environment;
+        private readonly IFaceRecognitionService _faceRecognitionService;
 
-        public ImageService(IWebHostEnvironment environment)
+        public ImageService(IWebHostEnvironment environment, IFaceRecognitionService faceRecognitionService)
         {
             _environment = environment;
+            _faceRecognitionService = faceRecognitionService;
         }
 
         public string SaveImage(string base64String, int personId)
         {
             try
             {
-                var path = (personId == -1) ? Path.Combine(_environment.ContentRootPath, "Faces To Recognize") : Path.Combine(Path.Combine(_environment.ContentRootPath, "Face Dataset"), personId.ToString());
+                string path = (personId == -1) ? Path.Combine(_environment.ContentRootPath, "Faces To Recognize") : Path.Combine(Path.Combine(_environment.ContentRootPath, "Face Dataset"), personId.ToString());
                 if (!Directory.Exists(path))
                 {
                     Directory.CreateDirectory(path);
@@ -33,40 +35,19 @@ namespace FaceRecognitionWebAPI.Services
                 MemoryStream ms = new(imageBytes, 0, imageBytes.Length);
                 ms.Write(imageBytes, 0, imageBytes.Length);
                 Image image = Image.FromStream(ms, true);
+                
+                Mat detectedFace = _faceRecognitionService.DetectFace((Bitmap)image);
 
-                Bitmap img = (Bitmap)image;
+                string fileWithPath;
+                string newFileName;
+                do
+                {
+                    string uniqueString = Guid.NewGuid().ToString();
+                    newFileName = uniqueString + ".jpg";
+                    fileWithPath = Path.Combine(path, newFileName);
+                } while(Directory.Exists(fileWithPath));
 
-                Net faceNet = CvDnn.ReadNetFromCaffe("D:\\THESIS FINAL OUTPUT\\FaceRecognitionWebAPI\\Face Detection Model\\deploy.prototxt.txt", "D:\\THESIS FINAL OUTPUT\\FaceRecognitionWebAPI\\Face Detection Model\\res10_300x300_ssd_iter_140000_fp16.caffemodel");
-
-                Mat newImage = img.ToMat();
-                OpenCvSharp.Cv2.CvtColor(newImage, newImage, OpenCvSharp.ColorConversionCodes.RGBA2RGB);
-                int frameHeight = newImage.Rows;
-                int frameWidth = newImage.Cols;
-
-                var blob = CvDnn.BlobFromImage(newImage, 1.0, new OpenCvSharp.Size(224, 224),
-                    new Scalar(104, 117, 123), false, false);
-
-                faceNet.SetInput(blob, "data");
-
-                var detection = faceNet.Forward("detection_out");
-                var detectionMat = new Mat(detection.Size(2), detection.Size(3), MatType.CV_32F,
-                    detection.Ptr(0));
-
-                float confidence = detectionMat.At<float>(0, 2);
-                int x1 = (int)(detectionMat.At<float>(0, 3) * frameWidth);
-                int y1 = (int)(detectionMat.At<float>(0, 4) * frameHeight);
-                int x2 = (int)(detectionMat.At<float>(0, 5) * frameWidth);
-                int y2 = (int)(detectionMat.At<float>(0, 6) * frameHeight);
-
-                Rect roi = new(x1, y1, x2 - x1, y2 - y1);
-                var detectedFace = newImage.Clone(roi);
-
-                string uniqueString = Guid.NewGuid().ToString();
-                // create a unique filename here
-                var newFileName = uniqueString + ".jpg";
-                var fileWithPath = Path.Combine(path, newFileName);
                 Mat imageToSave = new();
-                //Save detected face
                 Cv2.Resize(detectedFace, imageToSave, new OpenCvSharp.Size(224, 224));
                 imageToSave.SaveImage(fileWithPath);
                 ms.Close();
@@ -83,13 +64,17 @@ namespace FaceRecognitionWebAPI.Services
         {
             try
             {
-                var path = Path.Combine(Path.Combine(_environment.ContentRootPath, "Augmented Faces"), personId.ToString());
+                string path = Path.Combine(Path.Combine(_environment.ContentRootPath, "Augmented Faces"), personId.ToString());
 
 
-                string uniqueString = Guid.NewGuid().ToString();
-                // create a unique filename here
-                var newFileName = uniqueString + ".jpg";
-                var fileWithPath = Path.Combine(path, newFileName);
+                string fileWithPath;
+                string newFileName;
+                do
+                {
+                    string uniqueString = Guid.NewGuid().ToString();
+                    newFileName = uniqueString + ".jpg";
+                    fileWithPath = Path.Combine(path, newFileName);
+                } while (Directory.Exists(fileWithPath));
 
                 Mat newImage = new();
                 Cv2.Resize(image.ToMat(), newImage, new OpenCvSharp.Size(244, 244));
@@ -111,17 +96,17 @@ namespace FaceRecognitionWebAPI.Services
             try
             {
 
-                foreach(var augmentedFace in augmentedFaces)
+                foreach(AugmentedFace augmentedFace in augmentedFaces)
                 {
-                    var augmentedFacePath = Path.Combine(_environment.ContentRootPath, "Augmented Faces" + "\\" + face.PersonId.ToString() + "\\" + augmentedFace.ImageFile); 
-                    if (System.IO.File.Exists(augmentedFacePath))
+                    string augmentedFacePath = Path.Combine(_environment.ContentRootPath, "Augmented Faces" + "\\" + face.PersonId.ToString() + "\\" + augmentedFace.ImageFile); 
+                    if (File.Exists(augmentedFacePath))
                     {
-                        System.IO.File.Delete(augmentedFacePath);
+                        File.Delete(augmentedFacePath);
                     }
                 }
                 
-                var faceToTrainPath = Path.Combine(_environment.ContentRootPath, "Face Dataset" + "\\" + face.PersonId.ToString()+ "\\"+ face.ImageFile);
-                if (System.IO.File.Exists(faceToTrainPath))
+                string faceToTrainPath = Path.Combine(_environment.ContentRootPath, "Face Dataset" + "\\" + face.PersonId.ToString()+ "\\"+ face.ImageFile);
+                if (File.Exists(faceToTrainPath))
                 {
                     File.Delete(faceToTrainPath);
                     return true;
@@ -139,10 +124,10 @@ namespace FaceRecognitionWebAPI.Services
             try
             {
 
-                var path = Path.Combine(_environment.ContentRootPath, "Faces To Recognize" + "\\" + face.ImageFile);
-                if (System.IO.File.Exists(path))
+                string path = Path.Combine(_environment.ContentRootPath, "Faces To Recognize" + "\\" + face.ImageFile);
+                if (File.Exists(path))
                 {
-                    System.IO.File.Delete(path);
+                    File.Delete(path);
                     return true;
                 }
                 return false;
@@ -157,17 +142,17 @@ namespace FaceRecognitionWebAPI.Services
         {
             try
             {
-                var augmentedFacePath = Path.Combine(_environment.ContentRootPath, "Augmented Faces" + "\\" + id.ToString());
+                string augmentedFacePath = Path.Combine(_environment.ContentRootPath, "Augmented Faces" + "\\" + id.ToString());
 
-                var faceToTrainPath = Path.Combine(_environment.ContentRootPath, "Face Dataset" + "\\" + id.ToString());
-                if (System.IO.File.Exists(augmentedFacePath))
+                string faceToTrainPath = Path.Combine(_environment.ContentRootPath, "Face Dataset" + "\\" + id.ToString());
+                if (Directory.Exists(augmentedFacePath))
                 {
-                    File.Delete(augmentedFacePath);
+                    Directory.Delete(augmentedFacePath, true);
                 }
 
-                if (System.IO.File.Exists(faceToTrainPath))
+                if (Directory.Exists(faceToTrainPath))
                 {
-                    File.Delete(faceToTrainPath);
+                    Directory.Delete(faceToTrainPath, true);
                 }
                 return true;
             }
@@ -179,7 +164,7 @@ namespace FaceRecognitionWebAPI.Services
 
         public string ImagePathToBase64(string path)
         {
-            using System.Drawing.Image image = System.Drawing.Image.FromFile(path);
+            using Image image = Image.FromFile(path);
             using MemoryStream m = new();
             image.Save(m, image.RawFormat);
             byte[] imageBytes = m.ToArray();

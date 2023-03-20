@@ -8,9 +8,9 @@ namespace FaceRecognitionWebAPI.Interfaces
 
         public Task<Person> GetPerson(int id);
 
-        public Task<List<Person>> GetPeople(List<string> validIdNumbers);
+        public Task<List<Person>> GetPeople(List<string> pairIds);
 
-        public Task<Person> GetPerson(string validIdNumber);
+        public Task<Person> GetPerson(string pairId);
 
         public void DetachPerson(Person person);
 

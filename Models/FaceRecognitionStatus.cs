@@ -1,7 +1,10 @@
-﻿namespace FaceRecognitionWebAPI.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace FaceRecognitionWebAPI.Models
 {
     public class FaceRecognitionStatus
     {
+        [Key]
         public int Id { get; set; }
         public bool IsRecognized { get; set; }
         public int FaceToRecognizeId { get; set; }

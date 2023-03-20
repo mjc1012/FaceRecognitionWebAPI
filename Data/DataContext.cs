@@ -68,7 +68,7 @@ namespace FaceRecognitionWebAPI.Data
                   FirstName = "Admin",
                   MiddleName = "",
                   LastName = "Admin",
-                  ValidIdNumber = "Admin",
+                  PairId = "1234",
                   Password = PasswordHasher.HashPassword("Admin@123"),
               });
         }

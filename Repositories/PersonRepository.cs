@@ -18,7 +18,7 @@ namespace FaceRecognitionWebAPI.Respository
         {
             try
             {
-                return await _context.Persons.OrderBy(p => p.Id).Include(p => p.FacesToTrain).Include(p => p.FaceRecognitionStatuses).ToListAsync();
+                return await _context.Persons.OrderBy(p => p.LastName).ThenBy(p => p.MiddleName).ThenBy(p => p.FirstName).Include(p => p.FacesToTrain).Include(p => p.FaceRecognitionStatuses).ToListAsync();
             }
             catch (Exception)
             {
@@ -26,11 +26,11 @@ namespace FaceRecognitionWebAPI.Respository
             }
         }
 
-        public async Task<List<Person>> GetPeople(List<string> validIdNumbers)
+        public async Task<List<Person>> GetPeople(List<string> pairIds)
         {
             try
             {
-                return await _context.Persons.Where(p => validIdNumbers.Contains(p.ValidIdNumber)).Include(p => p.FacesToTrain).Include(p => p.FaceRecognitionStatuses).ToListAsync();
+                return await _context.Persons.Where(p => pairIds.Contains(p.PairId)).OrderBy(p => p.LastName).ThenBy(p => p.MiddleName).ThenBy(p => p.FirstName).Include(p => p.FacesToTrain).Include(p => p.FaceRecognitionStatuses).ToListAsync();
             }
             catch (Exception)
             {
@@ -50,11 +50,11 @@ namespace FaceRecognitionWebAPI.Respository
             }
         }
 
-        public async Task<Person> GetPerson(string validIdNumber) 
+        public async Task<Person> GetPerson(string pairId) 
         {
             try
             {
-                return await _context.Persons.Where(p => p.ValidIdNumber.Trim() == validIdNumber.Trim()).FirstOrDefaultAsync();
+                return await _context.Persons.Where(p => p.PairId.Trim() == pairId.Trim()).FirstOrDefaultAsync();
             }
             catch (Exception)
             {

@@ -26,6 +26,6 @@ namespace FaceRecognitionWebAPI.Services
 
         public IImageAugmentationService imageAugmentationService => new ImageAugmentationService(augmentedFaceRepository, imageService, _environment);
 
-        public IImageService imageService => new ImageService(_environment);
+        public IImageService imageService => new ImageService(_environment, faceRecognitionService);
     }
 }

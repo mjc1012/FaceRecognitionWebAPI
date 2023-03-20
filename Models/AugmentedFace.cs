@@ -5,6 +5,7 @@ namespace FaceRecognitionWebAPI.Models
 {
     public class AugmentedFace
     {
+        [Key]
         public int Id { get; set; }
 
         public string ImageFile { get; set; }

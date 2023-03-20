@@ -26,11 +26,17 @@ namespace FaceRecognitionWebAPI.Controllers
         public async Task<IActionResult> RecognizeFace(int id)
         {
             ResponseDto<PersonDto> response;
-
-            var face = await _uow.faceToRecognizeRepository.GetFaceToRecognize(id);
-            int predictedPersonId = _uow.faceRecognitionService.RecognizeFace(face);
-            var predictedPerson = await _uow.personRepository.GetPerson(predictedPersonId);
-            PersonDto person = _mapper.Map<PersonDto>(predictedPerson);
+            try
+            {
+                var face = await _uow.faceToRecognizeRepository.GetFaceToRecognize(id);
+                int predictedPersonId = _uow.faceRecognitionService.RecognizeFace(face);
+                if (predictedPersonId == -1)
+                {
+                    response = new ResponseDto<PersonDto>() { Status = false, Message = "No data" };
+                    return StatusCode(StatusCodes.Status200OK, response);
+                }
+                var predictedPerson = await _uow.personRepository.GetPerson(predictedPersonId);
+                PersonDto person = _mapper.Map<PersonDto>(predictedPerson);
 
                 if (person != null)
                 {
@@ -41,25 +47,35 @@ namespace FaceRecognitionWebAPI.Controllers
                     response = new ResponseDto<PersonDto>() { Status = false, Message = "No data" };
                 }
                 return StatusCode(StatusCodes.Status200OK, response);
-           
+            }
+            catch (Exception ex)
+            {
+                response = new ResponseDto<PersonDto>() { Status = false, Message = ex.Message };
+                return StatusCode(StatusCodes.Status500InternalServerError, response);
+            }
+
+
         }
 
         [Authorize]
         [HttpGet("train-model")]
         public IActionResult TrainModel()
         {
-
             ResponseDto<bool> response;
-
-            if (_uow.faceRecognitionService.TrainModel())
+            try
             {
+                _uow.faceRecognitionService.TrainModel();
                 response = new ResponseDto<bool>() { Status = true, Message = "Model Successfully Trained" };
+                
+                return StatusCode(StatusCodes.Status200OK, response);
             }
-            else
+            catch(Exception ex)
             {
-                response = new ResponseDto<bool>() { Status = false, Message = "Training Model was Unsuccessful" };
+                response = new ResponseDto<bool>() { Status = false, Message = ex.Message };
+                return StatusCode(StatusCodes.Status500InternalServerError, response);
             }
-            return StatusCode(StatusCodes.Status200OK, response);
+
+
         }
     }
 }

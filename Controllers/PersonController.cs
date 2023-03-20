@@ -7,6 +7,7 @@ using FaceRecognitionWebAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace FaceRecognitionWebAPI.Controllers
 {
@@ -28,25 +29,25 @@ namespace FaceRecognitionWebAPI.Controllers
             ResponseDto<TokenDto> response;
             try
             {
-                Person person = await _uow.personRepository.GetPerson(request.ValidIdNumber);
+                Person person = await _uow.personRepository.GetPerson(request.PairId);
 
                 if (person == null || !PasswordHasher.VerifyPassword(request.Password, person.Password))
                 {
                     response = new ResponseDto<TokenDto>() { Status = false, Message = "User Not Found" };
+                    return StatusCode(StatusCodes.Status200OK, response);
                 }
-                else
+
+                string accessToken = _uow.authenticationRepository.CreateJwt(person);
+                string refreshToken = await _uow.authenticationRepository.CreateRefreshToken();
+                DateTime refreshTokenExpiryTime = DateTime.Now.AddDays(5);
+                Person personWithToken = await _uow.authenticationRepository.saveTokens(person, accessToken, refreshToken, refreshTokenExpiryTime);
+                TokenDto token = new()
                 {
-                    string accessToken = _uow.authenticationRepository.CreateJwt(person);
-                    string refreshToken = await _uow.authenticationRepository.CreateRefreshToken();
-                    DateTime refreshTokenExpiryTime = DateTime.Now.AddDays(5);
-                    Person personWithToken = await _uow.authenticationRepository.saveTokens(person, accessToken, refreshToken, refreshTokenExpiryTime);
-                    TokenDto token = new()
-                    {
-                        AccessToken = personWithToken.AccessToken,
-                        RefreshToken = personWithToken.RefreshToken
-                    };
-                    response = new ResponseDto<TokenDto>() { Status = true, Message = "User Found", Value = token };
-                }
+                    AccessToken = personWithToken.AccessToken,
+                    RefreshToken = personWithToken.RefreshToken
+                };
+                response = new ResponseDto<TokenDto>() { Status = true, Message = "User Found", Value = token };
+                
 
                 return StatusCode(StatusCodes.Status200OK, response);
             }
@@ -63,25 +64,25 @@ namespace FaceRecognitionWebAPI.Controllers
             ResponseDto<TokenDto> response;
             try
             {
-                var principal = _uow.authenticationRepository.GetPrincipalFromExpiredToken(tokenDto.AccessToken);
-                var idNumber = principal.Identity.Name;
+                ClaimsPrincipal principal = _uow.authenticationRepository.GetPrincipalFromExpiredToken(tokenDto.AccessToken);
+                string idNumber = principal.Identity.Name;
                 Person person = await _uow.personRepository.GetPerson(idNumber);
                 if (person == null || person.RefreshToken != tokenDto.RefreshToken || person.RefreshTokenExpiryTime <= DateTime.Now)
                 {
                     response = new ResponseDto<TokenDto>() { Status = false, Message = "Invalid Request" };
+                    return StatusCode(StatusCodes.Status200OK, response);
                 }
-                else
+
+                string newAccessToken = _uow.authenticationRepository.CreateJwt(person);
+                string newRefreshToken = await _uow.authenticationRepository.CreateRefreshToken();
+                Person personWithToken = await _uow.authenticationRepository.saveTokens(person, newAccessToken, newRefreshToken);
+                TokenDto token = new()
                 {
-                    string newAccessToken = _uow.authenticationRepository.CreateJwt(person);
-                    string newRefreshToken = await _uow.authenticationRepository.CreateRefreshToken();
-                    Person personWithToken = await _uow.authenticationRepository.saveTokens(person, newAccessToken, newRefreshToken);
-                    TokenDto token = new()
-                    {
-                        AccessToken = personWithToken.AccessToken,
-                        RefreshToken = personWithToken.RefreshToken
-                    };
-                    response = new ResponseDto<TokenDto>() { Status = true, Message = "User Found", Value = token };
-                }
+                    AccessToken = personWithToken.AccessToken,
+                    RefreshToken = personWithToken.RefreshToken
+                };
+                response = new ResponseDto<TokenDto>() { Status = true, Message = "Token Refreshed", Value = token };
+               
 
                 return StatusCode(StatusCodes.Status200OK, response);
             }
@@ -103,7 +104,7 @@ namespace FaceRecognitionWebAPI.Controllers
 
                 if (people.Count > 0)
                 {
-                    response = new ResponseDto<List<PersonDto>>() { Status = true, Message = "Got All Person", Value = people };
+                    response = new ResponseDto<List<PersonDto>>() { Status = true, Message = "Got All User", Value = people };
                 }
                 else
                 {
@@ -120,22 +121,22 @@ namespace FaceRecognitionWebAPI.Controllers
         }
 
         [Authorize]
-        [HttpGet("{validIdNumber}")]
-        public async Task<IActionResult> GetPerson(string validIdNumber)
+        [HttpGet("{pairId}")]
+        public async Task<IActionResult> GetPerson(string pairId)
         {
             ResponseDto<PersonDto> response;
             try
             {
 
-                Person person = await _uow.personRepository.GetPerson(validIdNumber);
+                Person person = await _uow.personRepository.GetPerson(pairId);
 
                 if (person != null)
                 {
-                    response = new ResponseDto<PersonDto>() { Status = true, Message = "Person Found", Value = _mapper.Map<PersonDto>(person) };
+                    response = new ResponseDto<PersonDto>() { Status = true, Message = "User Found", Value = _mapper.Map<PersonDto>(person) };
                 }
                 else
                 {
-                    response = new ResponseDto<PersonDto>() { Status = false, Message = "Could not find Person" };
+                    response = new ResponseDto<PersonDto>() { Status = false, Message = "User Not Found" };
                 }
 
                 return StatusCode(StatusCodes.Status200OK, response);
@@ -147,8 +148,6 @@ namespace FaceRecognitionWebAPI.Controllers
             }
         }
 
-
-
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> CreatePerson([FromBody] PersonDto request)
@@ -156,18 +155,26 @@ namespace FaceRecognitionWebAPI.Controllers
             ResponseDto<PersonDto> response;
             try
             {
-                request.Password = PasswordHasher.HashPassword(request.FirstName.Replace(" ", String.Empty) + "Alliance" + request.LastName + "@123");
+                Person checkPerson = await _uow.personRepository.GetPerson(request.PairId);
+
+                if (checkPerson != null)
+                {
+                    response = new ResponseDto<PersonDto>() { Status = false, Message = "Pair Id Already Exist" };
+                    return StatusCode(StatusCodes.Status200OK, response);
+                }
+
+                request.Password = PasswordHasher.HashPassword(request.FirstName.Replace(" ", string.Empty) + "Alliance" + request.LastName + "@123");
                 Person person = _mapper.Map<Person>(request);
 
                 Person personCreated = await _uow.personRepository.CreatePerson(person);
 
-                if (personCreated.Id != 0)
+                if (personCreated.Id != 0 && personCreated != null)
                 {
-                    response = new ResponseDto<PersonDto>() { Status = true, Message = "Person Created", Value = _mapper.Map<PersonDto>(personCreated) };
+                    response = new ResponseDto<PersonDto>() { Status = true, Message = "User Created", Value = _mapper.Map<PersonDto>(personCreated) };
                 }
                 else
                 {
-                    response = new ResponseDto<PersonDto>() { Status = false, Message = "Could not create Person" };
+                    response = new ResponseDto<PersonDto>() { Status = false, Message = "User Not Created" };
                 }
                 return StatusCode(StatusCodes.Status200OK, response);
             }
@@ -180,39 +187,19 @@ namespace FaceRecognitionWebAPI.Controllers
 
         [Authorize]
         [HttpPut]
-        public async Task<IActionResult> UpdatePerson([FromBody] PersonDto request)
-        {
-            ResponseDto<PersonDto> response;
-            try
-            {
-                Person person = _mapper.Map<Person>(request);
-                Person personEdited = await _uow.personRepository.UpdatePerson(person);
-
-                response = new ResponseDto<PersonDto>() { Status = true, Message = "Person Updated", Value = _mapper.Map<PersonDto>(personEdited) };
-
-                return StatusCode(StatusCodes.Status200OK, response);
-            }
-            catch (Exception ex)
-            {
-                response = new ResponseDto<PersonDto>() { Status = false, Message = ex.Message };
-                return StatusCode(StatusCodes.Status500InternalServerError, response);
-            }
-        }
-
-        [Authorize]
-        [HttpPut("update-using-valid-id-number")]
         public async Task<IActionResult> UpdatePersonUsingValidIdNumber([FromBody] PersonDto request)
         {
             ResponseDto<PersonDto> response;
             try
             {
-                Person personFound = await _uow.personRepository.GetPerson(request.ValidIdNumber);
+                Person personFound = await _uow.personRepository.GetPerson(request.PairId);
                 Person person = _mapper.Map<Person>(request);
                 person.Id = personFound.Id;
+                person.Password = personFound.Password;
                 _uow.personRepository.DetachPerson(personFound);
                 Person personEdited = await _uow.personRepository.UpdatePerson(person);
 
-                response = new ResponseDto<PersonDto>() { Status = true, Message = "Person Updated", Value = _mapper.Map<PersonDto>(personEdited) };
+                response = new ResponseDto<PersonDto>() { Status = true, Message = "User Updated", Value = _mapper.Map<PersonDto>(personEdited) };
 
                 return StatusCode(StatusCodes.Status200OK, response);
             }
@@ -224,53 +211,23 @@ namespace FaceRecognitionWebAPI.Controllers
         }
 
         [Authorize]
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeletePerson(int id)
-        {
-            ResponseDto<bool> response;
-            try
-            {
-
-                Person employee = await _uow.personRepository.GetPerson(id);
-                bool deleted = await _uow.personRepository.DeletePerson(employee);
-
-                if (deleted)
-                {
-                    _uow.imageService.DeleteFolder(id);
-                    response = new ResponseDto<bool>() { Status = true, Message = "Person Deleted" };
-                }
-                else
-                {
-                    response = new ResponseDto<bool>() { Status = true, Message = "Could not delete Person" };
-                }
-
-                return StatusCode(StatusCodes.Status200OK, response);
-            }
-            catch (Exception ex)
-            {
-                response = new ResponseDto<bool>() { Status = false, Message = ex.Message };
-                return StatusCode(StatusCodes.Status500InternalServerError, response);
-            }
-        }
-
-        [Authorize]
-        [HttpPut("deletePeople")]
+        [HttpPut("delete-people")]
         public async Task<IActionResult> DeletePeople([FromBody] DeleteRangeDto deleteRange)
         {
             ResponseDto<bool> response;
             try
             {
 
-                List<Person> people = _mapper.Map<List<Person>>(await _uow.personRepository.GetPeople(deleteRange.IdNumbers));
+                List<Person> people = _mapper.Map<List<Person>>(await _uow.personRepository.GetPeople(deleteRange.Ids));
                 bool deleted = await _uow.personRepository.DeletePeople(people);
 
                 if (deleted)
                 {
-                    response = new ResponseDto<bool>() { Status = true, Message = "Employee Deleted" };
+                    response = new ResponseDto<bool>() { Status = true, Message = "Users Deleted" };
                 }
                 else
                 {
-                    response = new ResponseDto<bool>() { Status = false, Message = "Could not delete" };
+                    response = new ResponseDto<bool>() { Status = false, Message = "Users Not Deleted" };
                 }
 
                 return StatusCode(StatusCodes.Status200OK, response);
@@ -283,19 +240,24 @@ namespace FaceRecognitionWebAPI.Controllers
         }
 
         [Authorize]
-        [HttpDelete("use-valid-id-number/{validIdNumber}")]
-        public async Task<IActionResult> DeletePersonWithValidIdNumber(string validIdNumber)
+        [HttpDelete("{pairId}")]
+        public async Task<IActionResult> DeletePersonWithValidIdNumber(string pairId)
         {
             ResponseDto<bool> response;
             try
             {
 
-                Person employee = await _uow.personRepository.GetPerson(validIdNumber);
-                bool deleted = await _uow.personRepository.DeletePerson(employee);
+                Person person = await _uow.personRepository.GetPerson(pairId);
+                if (!_uow.imageService.DeleteFolder(person.Id))
+                {
+                    response = new ResponseDto<bool>() { Status = false, Message = "Something went wrong" };
+                    return StatusCode(StatusCodes.Status200OK, response);
+                }
+                bool deleted = await _uow.personRepository.DeletePerson(person);
 
                 if (deleted)
                 {
-                    response = new ResponseDto<bool>() { Status = true, Message = "Person Deleted" };
+                    response = new ResponseDto<bool>() { Status = true, Message = "User Deleted" };
                 }
                 else
                 {
@@ -311,7 +273,6 @@ namespace FaceRecognitionWebAPI.Controllers
             }
         }
 
-        [Authorize]
         [HttpPut("password")]
         public async Task<IActionResult> UpdatePassword([FromBody] PersonDto request)
         {
@@ -325,7 +286,7 @@ namespace FaceRecognitionWebAPI.Controllers
                     return StatusCode(StatusCodes.Status200OK, response);
                 }
 
-                Person oldEmployee = await _uow.personRepository.GetPerson(request.ValidIdNumber);
+                Person oldEmployee = await _uow.personRepository.GetPerson(request.PairId);
                 oldEmployee.Password = PasswordHasher.HashPassword(request.Password);
                 _uow.personRepository.DetachPerson(oldEmployee);
                 Person employeeEdited = await _uow.personRepository.UpdatePerson(oldEmployee);

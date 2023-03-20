@@ -22,63 +22,84 @@ namespace FaceRecognitionWebAPI.Services
 
         public string CheckPasswordStrength(string password)
         {
-            StringBuilder sb = new();
-            if (password.Length < 8)
+            try
             {
-                sb.Append("Minimum password length should be 8" + Environment.NewLine);
+                StringBuilder sb = new();
+                if (password.Length < 8)
+                {
+                    sb.Append("Minimum password length should be 8" + Environment.NewLine);
+                }
+                if (!(Regex.IsMatch(password, "[a-z]") && Regex.IsMatch(password, "[A-Z]") && Regex.IsMatch(password, "[0-9]")))
+                {
+                    sb.Append("Password should contain atleast one Uppercase Letter, one Lowercase Letter and one Number" + Environment.NewLine);
+                }
+                if (!Regex.IsMatch(password, "[~,',!,@,#,$,%,^,&,*,(,),-,_,+,=,{,},\\[,\\],|,/,\\,:,;,\",`,<,>,,,.,?]"))
+                {
+                    sb.Append("Password should contain contain atleast one special character" + Environment.NewLine);
+                }
+                return sb.ToString();
             }
-            if (!(Regex.IsMatch(password, "[a-z]") && Regex.IsMatch(password, "[A-Z]") && Regex.IsMatch(password, "[0-9]")))
+            catch(Exception ) 
             {
-                sb.Append("Password should contain atleast one Uppercase Letter, one Lowercase Letter and one Number" + Environment.NewLine);
+                throw;
             }
-            if (!Regex.IsMatch(password, "[~,',!,@,#,$,%,^,&,*,(,),-,_,+,=,{,},\\[,\\],|,/,\\,:,;,\",`,<,>,,,.,?]"))
-            {
-                sb.Append("Password should contain contain atleast one special character" + Environment.NewLine);
-            }
-            return sb.ToString();
         }
 
         public string CreateJwt(Person person)
         {
-            var jwtTokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes("veryveryverysecret.....");
-            var identity = new ClaimsIdentity(new Claim[]
+            try
             {
-                new Claim(ClaimTypes.Name, person.ValidIdNumber)
-            });
+                JwtSecurityTokenHandler jwtTokenHandler = new();
+                byte[] key = Encoding.ASCII.GetBytes("veryveryverysecret.....");
+                ClaimsIdentity identity = new(new Claim[]
+                {
+                new Claim(ClaimTypes.Name, person.PairId)
+                });
 
-            var credentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256);
+                SigningCredentials credentials = new(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256);
 
-            var tokenDescriptor = new SecurityTokenDescriptor
+                SecurityTokenDescriptor tokenDescriptor = new()
+                {
+                    Subject = identity,
+                    Expires = DateTime.Now.AddMinutes(5),
+                    SigningCredentials = credentials,
+                };
+                SecurityToken token = jwtTokenHandler.CreateToken(tokenDescriptor);
+                return jwtTokenHandler.WriteToken(token);
+            }
+            catch(Exception)
             {
-                Subject = identity,
-                Expires = DateTime.Now.AddMinutes(5),
-                SigningCredentials = credentials,
-            };
-            var token = jwtTokenHandler.CreateToken(tokenDescriptor);
-            return jwtTokenHandler.WriteToken(token);
+                throw;
+            }
         }
 
         public ClaimsPrincipal GetPrincipalFromExpiredToken(string expiredToken)
         {
-            var key = Encoding.ASCII.GetBytes("veryveryverysecret.....");
-            var tokenValidationParameters = new TokenValidationParameters
+            try
             {
-                ValidateAudience = false,
-                ValidateIssuer = false,
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(key),
-                ValidateLifetime = false
-            };
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var principal = tokenHandler.ValidateToken(expiredToken, tokenValidationParameters, out SecurityToken securityToken);
-            if (securityToken is not JwtSecurityToken jwtSecurityToken || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-            {
-                throw new SecurityTokenException("This is an invalid token");
+                byte[] key = Encoding.ASCII.GetBytes("veryveryverysecret.....");
+                TokenValidationParameters tokenValidationParameters = new ()
+                {
+                    ValidateAudience = false,
+                    ValidateIssuer = false,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateLifetime = false
+                };
+                JwtSecurityTokenHandler tokenHandler = new();
+                ClaimsPrincipal principal = tokenHandler.ValidateToken(expiredToken, tokenValidationParameters, out SecurityToken securityToken);
+                if (securityToken is not JwtSecurityToken jwtSecurityToken || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    throw new SecurityTokenException("This is an invalid token");
+                }
+                else
+                {
+                    return principal;
+                }
             }
-            else
+            catch (Exception)
             {
-                return principal;
+                throw;
             }
         }
 
@@ -96,16 +117,23 @@ namespace FaceRecognitionWebAPI.Services
 
         public async Task<string> CreateRefreshToken()
         {
-            var tokenBytes = RandomNumberGenerator.GetBytes(64);
-            var refreshToken = Convert.ToBase64String(tokenBytes);
-
-            var tokenInUser = await EmployeeRefreshTokenExists(refreshToken);
-
-            if (tokenInUser)
+            try
             {
-                return await CreateRefreshToken();
+                byte[] tokenBytes = RandomNumberGenerator.GetBytes(64);
+                string refreshToken = Convert.ToBase64String(tokenBytes);
+
+                bool tokenInUser = await EmployeeRefreshTokenExists(refreshToken);
+
+                if (tokenInUser)
+                {
+                    return await CreateRefreshToken();
+                }
+                return refreshToken;
             }
-            return refreshToken;
+            catch(Exception)
+            {
+                throw;
+            }
         }
 
         public async Task<Person> saveTokens(Person person, string accessToken, string refreshToken)
