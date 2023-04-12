@@ -5,6 +5,7 @@ using OpenCvSharp.Dnn;
 using OpenCvSharp.Extensions;
 using System;
 using System.Drawing;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace FaceRecognitionWebAPI.Services
@@ -95,22 +96,34 @@ namespace FaceRecognitionWebAPI.Services
         {
             try
             {
-
-                foreach(AugmentedFace augmentedFace in augmentedFaces)
+                string augmentedFacePath = Path.Combine(_environment.ContentRootPath, "Augmented Faces" + "\\" + face.PersonId.ToString());
+                foreach (AugmentedFace augmentedFace in augmentedFaces)
                 {
-                    string augmentedFacePath = Path.Combine(_environment.ContentRootPath, "Augmented Faces" + "\\" + face.PersonId.ToString() + "\\" + augmentedFace.ImageFile); 
-                    if (File.Exists(augmentedFacePath))
+                    string tempPath = Path.Combine(augmentedFacePath, augmentedFace.ImageFile); 
+                    if (File.Exists(tempPath))
                     {
-                        File.Delete(augmentedFacePath);
+                        File.Delete(tempPath);
                     }
                 }
-                
-                string faceToTrainPath = Path.Combine(_environment.ContentRootPath, "Face Dataset" + "\\" + face.PersonId.ToString()+ "\\"+ face.ImageFile);
-                if (File.Exists(faceToTrainPath))
+
+                if (Directory.Exists(augmentedFacePath) && !Directory.EnumerateFileSystemEntries(augmentedFacePath).Any())
                 {
-                    File.Delete(faceToTrainPath);
+                    Directory.Delete(augmentedFacePath, true);
+                }
+                
+                string faceToTrainPath = Path.Combine(_environment.ContentRootPath, "Face Dataset" + "\\" + face.PersonId.ToString());
+                if (File.Exists(Path.Combine(faceToTrainPath, face.ImageFile)))
+                {
+                    File.Delete(Path.Combine(faceToTrainPath, face.ImageFile));
+
+                    if (Directory.Exists(faceToTrainPath) && !Directory.EnumerateFileSystemEntries(faceToTrainPath).Any())
+                    {
+                        Directory.Delete(faceToTrainPath, true);
+                    }
                     return true;
                 }
+
+
                 return false;
             }
             catch (Exception)

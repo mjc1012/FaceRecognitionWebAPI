@@ -3,7 +3,6 @@
     public interface IUnitOfWork
     {
         IAugmentedFaceRepository augmentedFaceRepository { get; }
-        IAuthenticationService authenticationRepository { get; }
         IFaceExpressionRepository faceExpressionRepository { get; }
         IFaceRecognitionService faceRecognitionService { get; }
         IFaceRecognitionStatusRepository faceRecognitionStatusRepository { get; }

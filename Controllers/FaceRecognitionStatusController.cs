@@ -20,6 +20,32 @@ namespace FaceRecognitionWebAPI.Controllers
             _uow = uow;
             _mapper = mapper;
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetFaceRecognitionStatuses()
+        {
+            ResponseDto<List<FaceRecognitionStatusDto>> response;
+            try
+            {
+                List<FaceRecognitionStatusDto> faceRecognitionStatuses = _mapper.Map<List<FaceRecognitionStatusDto>>(await _uow.faceRecognitionStatusRepository.GetFaceRecognitionStatuses());
+
+                if (faceRecognitionStatuses.Count > 0)
+                {
+                    response = new ResponseDto<List<FaceRecognitionStatusDto>>() { Status = true, Message = "Got All Face Recognition Statuses", Value = faceRecognitionStatuses };
+                }
+                else
+                {
+                    response = new ResponseDto<List<FaceRecognitionStatusDto>>() { Status = false, Message = "No data" };
+                }
+                return StatusCode(StatusCodes.Status200OK, response);
+            }
+            catch (Exception ex)
+            {
+                response = new ResponseDto<List<FaceRecognitionStatusDto>>() { Status = false, Message = ex.Message };
+                return StatusCode(StatusCodes.Status500InternalServerError, response);
+            }
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateFaceRecognitionStatus([FromBody] FaceRecognitionStatusDto request)
         {
@@ -27,7 +53,7 @@ namespace FaceRecognitionWebAPI.Controllers
             try
             {
                 var status = _mapper.Map<FaceRecognitionStatus>(request);
-                status.PredictedPerson = await _uow.personRepository.GetPerson(request.PredictedPersonId);
+                status.PredictedPerson = await _uow.personRepository.GetPersonById(request.PredictedPersonId);
                 status.FaceToRecognize = await _uow.faceToRecognizeRepository.GetFaceToRecognize(request.FaceToRecognizeId);
 
                 FaceRecognitionStatus statusCreated = await _uow.faceRecognitionStatusRepository.CreateFaceRecognitionStatus(status);

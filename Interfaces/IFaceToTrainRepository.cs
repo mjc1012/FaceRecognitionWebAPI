@@ -6,10 +6,10 @@ namespace FaceRecognitionWebAPI.Interfaces
     {
         public Task<List<FaceToTrain>> GetFacesToTrain();
 
-        public Task<List<FaceToTrain>> GetFacesToTrain(int personId);
-        public Task<bool> FaceToTrainWithFaceExpressionExists(int personId, int expressionId);
+        public Task<List<FaceToTrain>> GetFacesToTrain(int pairId);
+        public Task<bool> FaceToTrainWithFaceExpressionExists(int pairId, int expressionId);
 
-        public Task<FaceExpression> GetMissingFaceExpressionOfPerson(int id, List<FaceExpression> faceExpressions);
+        public Task<FaceExpression> GetMissingFaceExpressionOfPerson(int pairId, List<FaceExpression> faceExpressions);
 
         public Task<FaceToTrain> GetFaceToTrain(int id);
 

@@ -26,7 +26,7 @@ namespace FaceRecognitionWebAPI.Respository
             }
         }
 
-        public async Task<List<Person>> GetPeople(List<string> pairIds)
+        public async Task<List<Person>> GetPeople(List<int> pairIds)
         {
             try
             {
@@ -38,7 +38,7 @@ namespace FaceRecognitionWebAPI.Respository
             }
         }
 
-        public async Task<Person> GetPerson(int id)
+        public async Task<Person> GetPersonById(int id)
         {
             try
             {
@@ -50,11 +50,11 @@ namespace FaceRecognitionWebAPI.Respository
             }
         }
 
-        public async Task<Person> GetPerson(string pairId) 
+        public async Task<Person> GetPersonByPairId(int pairId) 
         {
             try
             {
-                return await _context.Persons.Where(p => p.PairId.Trim() == pairId.Trim()).FirstOrDefaultAsync();
+                return await _context.Persons.Where(p => p.PairId == pairId).FirstOrDefaultAsync();
             }
             catch (Exception)
             {

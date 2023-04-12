@@ -27,11 +27,11 @@ namespace FaceRecognitionWebAPI.Repository
                 throw;
             }
         }
-        public async Task<List<FaceToTrain>> GetFacesToTrain(int personId)
+        public async Task<List<FaceToTrain>> GetFacesToTrain(int pairId)
         {
             try
             {
-                return await _context.FacesToTrain.Where(p => p.Person.Id == personId).Include(p => p.Person).Include(p => p.FaceExpression).Include(p => p.AugmentedFaces).ToListAsync();
+                return await _context.FacesToTrain.Where(p => p.Person.PairId == pairId).Include(p => p.Person).Include(p => p.FaceExpression).Include(p => p.AugmentedFaces).ToListAsync();
             }
             catch (Exception)
             {
@@ -51,12 +51,12 @@ namespace FaceRecognitionWebAPI.Repository
             }
         }
 
-        public async Task<bool> FaceToTrainWithFaceExpressionExists(int personId, int expressionId)
+        public async Task<bool> FaceToTrainWithFaceExpressionExists(int pairId, int expressionId)
         {
            
             try
             {
-                return await _context.FacesToTrain.AnyAsync(p => p.Person.Id == personId && p.FaceExpression.Id == expressionId);
+                return await _context.FacesToTrain.AnyAsync(p => p.Person.PairId == pairId && p.FaceExpression.Id == expressionId);
             }
             catch (Exception)
             {
@@ -64,13 +64,13 @@ namespace FaceRecognitionWebAPI.Repository
             }
         }
 
-        public async Task<FaceExpression> GetMissingFaceExpressionOfPerson(int id, List<FaceExpression> faceExpressions)
+        public async Task<FaceExpression> GetMissingFaceExpressionOfPerson(int pairId, List<FaceExpression> faceExpressions)
         {
             try
             {
                 foreach (FaceExpression faceExpression in faceExpressions)
                 {
-                    if (!await FaceToTrainWithFaceExpressionExists(id, faceExpression.Id))
+                    if (!await FaceToTrainWithFaceExpressionExists(pairId, faceExpression.Id))
                     {
                         return faceExpression;
                     }

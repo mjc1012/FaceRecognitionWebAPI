@@ -3,6 +3,6 @@
     public class DeleteRangeDto
     {
 
-        public List<string> Ids { get; set; }
+        public List<int> Ids { get; set; }
     }
 }

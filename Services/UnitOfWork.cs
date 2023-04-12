@@ -16,7 +16,6 @@ namespace FaceRecognitionWebAPI.Services
         }
 
         public IAugmentedFaceRepository augmentedFaceRepository => new AugmentedFaceRepository(_context);
-        public IAuthenticationService authenticationRepository => new AuthenticationService(_context);
         public IFaceExpressionRepository faceExpressionRepository => new FaceExpressionRepository(_context);
         public IFaceRecognitionStatusRepository faceRecognitionStatusRepository => new FaceRecognitionStatusRepository(_context);
         public IFaceToRecognizeRepository faceToRecognizeRepository => new FaceToRecognizeRepository(_context);

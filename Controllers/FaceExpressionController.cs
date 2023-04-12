@@ -21,7 +21,6 @@ namespace FaceRecognitionWebAPI.Controllers
             _mapper = mapper;
         }
 
-        [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetFaceExpressions()
         {

@@ -35,7 +35,7 @@ namespace FaceRecognitionWebAPI.Controllers
                     response = new ResponseDto<PersonDto>() { Status = false, Message = "No data" };
                     return StatusCode(StatusCodes.Status200OK, response);
                 }
-                var predictedPerson = await _uow.personRepository.GetPerson(predictedPersonId);
+                var predictedPerson = await _uow.personRepository.GetPersonById(predictedPersonId);
                 PersonDto person = _mapper.Map<PersonDto>(predictedPerson);
 
                 if (person != null)
@@ -57,7 +57,6 @@ namespace FaceRecognitionWebAPI.Controllers
 
         }
 
-        [Authorize]
         [HttpGet("train-model")]
         public IActionResult TrainModel()
         {

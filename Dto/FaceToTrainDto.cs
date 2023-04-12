@@ -8,7 +8,7 @@
 
         public string Base64String { get; set; }
 
-        public int PersonId { get; set; }
+        public int PairId { get; set; }
 
         public int FaceExpressionId { get; set; }
     }

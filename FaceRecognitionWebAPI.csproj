@@ -40,6 +40,9 @@
     <Folder Include="Faces To Recognize\" />
     <Folder Include="Face Expression Samples\" />
     <Folder Include="Face Detection Model\" />
+    <Folder Include="Faces To Recognize\" />
+    <Folder Include="Face Dataset\" />
+    <Folder Include="Augmented Faces\" />
   </ItemGroup>
 
 </Project>

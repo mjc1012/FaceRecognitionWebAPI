@@ -73,7 +73,11 @@ namespace FaceRecognitionWebAPI.Helper
                 opt => opt.Ignore()
                 ); ;
 
-            CreateMap<FaceRecognitionStatus, FaceRecognitionStatusDto>();
+            CreateMap<FaceRecognitionStatus, FaceRecognitionStatusDto>()
+                .ForMember(
+                destiny => destiny.LoggedTime,
+                opt => opt.MapFrom(origin => origin.FaceToRecognize.LoggedTime.ToString("yyyy-MM-dd HH:mm:ss"))
+                );
 
             CreateMap<FaceRecognitionStatusDto, FaceRecognitionStatus>()
                 .ForMember(

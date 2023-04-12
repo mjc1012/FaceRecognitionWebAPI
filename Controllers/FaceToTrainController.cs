@@ -21,40 +21,13 @@ namespace FaceRecognitionWebAPI.Controllers
             _mapper = mapper;
         }
 
-        [Authorize]
-        [HttpGet]
-        public async Task<IActionResult> GetFacesToTrain()
+        [HttpGet("{pairId}/person-faces")]
+        public async Task<IActionResult> GetFacesToTrain(int pairId)
         {
             ResponseDto<List<FaceToTrainDto>> response;
             try
             {
-                List<FaceToTrainDto> faces = _mapper.Map<List<FaceToTrainDto>>(await _uow.faceToTrainRepository.GetFacesToTrain());
-
-                if (faces.Count > 0)
-                {
-                    response = new ResponseDto<List<FaceToTrainDto>>() { Status = true, Message = "Got All Faces To Train", Value = faces };
-                }
-                else
-                {
-                    response = new ResponseDto<List<FaceToTrainDto>>() { Status = false, Message = "No data" };
-                }
-                return StatusCode(StatusCodes.Status200OK, response);
-            }
-            catch (Exception ex)
-            {
-                response = new ResponseDto<List<FaceToTrainDto>>() { Status = false, Message = ex.Message };
-                return StatusCode(StatusCodes.Status500InternalServerError, response);
-            }
-        }
-
-        [Authorize]
-        [HttpGet("{personId}/person-faces")]
-        public async Task<IActionResult> GetFacesToTrain(int personId)
-        {
-            ResponseDto<List<FaceToTrainDto>> response;
-            try
-            {
-                List<FaceToTrainDto> faces = _mapper.Map<List<FaceToTrainDto>>(await _uow.faceToTrainRepository.GetFacesToTrain(personId));
+                List<FaceToTrainDto> faces = _mapper.Map<List<FaceToTrainDto>>(await _uow.faceToTrainRepository.GetFacesToTrain(pairId));
 
                 if (faces.Count > 0)
                 {
@@ -73,17 +46,15 @@ namespace FaceRecognitionWebAPI.Controllers
             }
         }
 
-
-        [Authorize]
-        [HttpGet("{id}/missing-expression")]
-        public async Task<IActionResult> GetMissingFaceExpression(int id)
+        [HttpGet("{pairId}/missing-expression")]
+        public async Task<IActionResult> GetMissingFaceExpression(int pairId)
         {
             ResponseDto<FaceExpressionDto> response;
             try
             {
 
                 List<FaceExpression> faceExpressions = await _uow.faceExpressionRepository.GetFaceExpressions();
-                FaceExpressionDto missingExpression = _mapper.Map<FaceExpressionDto>(await _uow.faceToTrainRepository.GetMissingFaceExpressionOfPerson(id, faceExpressions));
+                FaceExpressionDto missingExpression = _mapper.Map<FaceExpressionDto>(await _uow.faceToTrainRepository.GetMissingFaceExpressionOfPerson(pairId, faceExpressions));
 
                 if (missingExpression != null)
                 {
@@ -103,7 +74,6 @@ namespace FaceRecognitionWebAPI.Controllers
         }
 
 
-        [Authorize]
         [HttpPost]
         public async Task<IActionResult> CreateAndAugmentFaceToTrain([FromBody] FaceToTrainDto request)
         {
@@ -111,9 +81,10 @@ namespace FaceRecognitionWebAPI.Controllers
             ResponseDto<FaceToTrainDto> response;
             try
             {
-                request.ImageFile = _uow.imageService.SaveImage(request.Base64String, request.PersonId);
+                Person person = await _uow.personRepository.GetPersonByPairId(request.PairId);
+                request.ImageFile = _uow.imageService.SaveImage(request.Base64String, person.Id);
                 var faceMap = _mapper.Map<FaceToTrain>(request);
-                faceMap.Person = await _uow.personRepository.GetPerson(request.PersonId);
+                faceMap.Person = person;
                 faceMap.FaceExpression = await _uow.faceExpressionRepository.GetFaceExpression(request.FaceExpressionId);
 
                 FaceToTrain faceCreated = await _uow.faceToTrainRepository.CreateFaceToTrain(faceMap);
@@ -138,7 +109,6 @@ namespace FaceRecognitionWebAPI.Controllers
         }
 
 
-        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteFaceToTrain(int id)
         {

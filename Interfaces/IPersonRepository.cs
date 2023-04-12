@@ -6,11 +6,11 @@ namespace FaceRecognitionWebAPI.Interfaces
     {
         public Task<List<Person>> GetPeople();
 
-        public Task<Person> GetPerson(int id);
+        public Task<Person> GetPersonById(int id);
 
-        public Task<List<Person>> GetPeople(List<string> pairIds);
+        public Task<List<Person>> GetPeople(List<int> pairIds);
 
-        public Task<Person> GetPerson(string pairId);
+        public Task<Person> GetPersonByPairId(int pairId);
 
         public void DetachPerson(Person person);
 
