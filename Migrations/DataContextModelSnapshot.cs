@@ -214,7 +214,6 @@ namespace FaceRecognitionWebAPI.Migrations
                             Id = 1,
                             FirstName = "Admin",
                             LastName = "Admin",
-                            MiddleName = "",
                             PairId = 1
                         });
                 });

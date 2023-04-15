@@ -174,6 +174,7 @@ namespace FaceRecognitionWebAPI.Services
                     Arch = ImageClassificationTrainer.Architecture.MobilenetV2,
                     Epoch = 1000000,
                     BatchSize = 32,
+                    EarlyStoppingCriteria = new ImageClassificationTrainer.EarlyStopping(),
                     LearningRateScheduler = new Microsoft.ML.Trainers.LsrDecay(),
                     MetricsCallback = (metrics) => Console.WriteLine(metrics),
                 })
